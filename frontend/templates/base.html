@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-100/55">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pista Libre{% endblock %}</title>
+
+    <link rel="icon" href="/assets/img/icons/music-symbol.svg">
+
+    <!-- Tipografía Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS v3 vía CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        },
+                        playback: {
+                            teal: '#14b8a6',
+                            tealHover: '#0d9488',
+                        },
+                        stem: {
+                            vocals: '#3b82f6',
+                            drums: '#10b981',
+                            bass: '#a8a29e',
+                            other: '#b45309',
+                        }
+                    },
+                    boxShadow: {
+                        'card': '0 2px 8px -2px rgba(0, 0, 0, 0.05), 0 1px 4px -1px rgba(0, 0, 0, 0.03)',
+                        'card-hover': '0 10px 20px -5px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)',
+                        'floating': '0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Estilos externos desacoplados -->
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    <!-- Howler.js: Motor de audio Web Audio API para salas multitrack -->
+    <script defer src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.min.js"></script>
+
+    <!-- Controlador cliente de Pista Libre -->
+    <script defer src="/static/js/app.js"></script>
+
+    <!-- Alpine.js: Interactividad ligera de UI local -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
+    <!-- HTMX: Comunicación declarativa con backend y swap parcial -->
+    <script defer src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+
+<body class="h-full font-sans text-slate-800 antialiased selection:bg-brand-100 selection:text-brand-700 flex flex-col"
+    x-data="{ mobileMenuOpen: false }">
+
+    <!-- Navbar superior horizontal en Desktop y cabecera móvil -->
+    {% include "components/navbar.html" %}
+
+    <!-- Contenedor del contenido principal centrado horizontalmente a pantalla completa -->
+    <main class="flex-1 overflow-y-auto">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Barra inferior de reproducción flotante (centrada en pantalla completa) -->
+    {% block footer %}{% endblock %}
+
+</body>
+
+</html>

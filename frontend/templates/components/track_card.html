@@ -1,0 +1,91 @@
+{# Macro reutilizable para renderizar cada pista de audio con diseño compacto, profesional y accesible #}
+{% macro render_track(key, name, subtitle, icon_path, accent_text, volume=75) %}
+<div class="bg-slate-50/70 hover:bg-white border border-gray-300 hover:border-gray-400 rounded-xl sm:rounded-2xl p-2.5 sm:p-3 lg:py-2.5 lg:px-4 xl:px-5 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 lg:gap-6 relative overflow-hidden shadow-xs hover:shadow-md transition-all duration-200 min-h-[70px] sm:min-h-[95px] lg:min-h-[110px] xl:min-h-[120px]"
+    :class="{'opacity-40 grayscale-[25%]': isTrackDimmed('{{ key }}')}">
+
+    <!-- Nombre e Información del Instrumento con Icono Oficial (En móvil: fila compacta con Mute/Solo a la derecha) -->
+    <div
+        class="w-full md:w-44 lg:w-48 xl:w-56 shrink-0 flex items-center justify-between md:justify-start gap-2.5 sm:gap-3">
+        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div
+                class="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-xl bg-white border border-slate-200/90 flex items-center justify-center p-1.5 sm:p-2 shrink-0 shadow-2xs">
+                <img src="{{ icon_path }}" alt="{{ name }}" class="w-full h-full object-contain">
+            </div>
+            <div class="min-w-0 space-y-0.5">
+                <p class="text-xs sm:text-sm lg:text-base font-extrabold text-gray-800 leading-snug truncate">{{ name }}
+                </p>
+                <p class="text-[10px] sm:text-[11px] text-slate-400 truncate font-medium">{{ subtitle }}</p>
+            </div>
+        </div>
+
+        <!-- Grupo de botones Silenciar / Solo (Visible en móvil < md al lado del título) -->
+        <div class="md:hidden inline-flex rounded-lg bg-slate-200/70 p-0.5 text-xs font-semibold shrink-0">
+            <button type="button" @click="toggleMute('{{ key }}')"
+                class="px-2.5 py-1 rounded-md transition-all duration-150 cursor-pointer"
+                :class="tracks.{{ key }}.muted ? 'bg-rose-500 text-white font-bold shadow-xs' : 'text-slate-600 hover:bg-white'">
+                M
+            </button>
+            <button type="button" @click="toggleSolo('{{ key }}')"
+                class="px-2.5 py-1 rounded-md transition-all duration-150 cursor-pointer"
+                :class="tracks.{{ key }}.solo ? 'bg-amber-400 text-slate-900 font-bold shadow-xs' : 'text-slate-600 hover:bg-white'">
+                S
+            </button>
+        </div>
+    </div>
+
+    <!-- Representación de Waveform Dinámico Proporcional (Click-to-seek activo) -->
+    <div @click="seekFromWaveform($event)" title="Haz clic para saltar a esta posición"
+        class="flex-1 h-8 sm:h-9 lg:h-10 xl:h-11 flex items-center justify-center px-1 sm:px-2 lg:px-3 cursor-pointer">
+        <div
+            class="w-full flex items-center justify-between gap-[1.5px] sm:gap-[2px] lg:gap-[2.5px] h-7 sm:h-8 lg:h-9 xl:h-10 overflow-hidden">
+            {# 98 barras de onda de audio de alta resolución con alturas variadas #}
+            {% set heights = [
+            20, 35, 55, 80, 45, 95, 60, 30, 85, 70, 40, 25, 65, 90, 75, 45,
+            80, 55, 30, 60, 20, 15, 50, 85, 100, 70, 40, 35, 80, 60, 45, 25,
+            70, 95, 75, 35, 60, 30, 45, 20, 55, 75, 90, 65, 40, 80, 50, 25,
+            65, 85, 100, 75, 40, 30, 60, 45, 70, 85, 55, 35, 50, 25, 40, 20,
+            35, 60, 85, 95, 70, 45, 65, 80, 50, 30, 65, 85, 60, 35, 55, 30,
+            45, 20, 35, 60, 85, 70, 40, 65, 90, 50, 25, 40, 65, 85, 55, 30, 45, 20
+            ] %}
+            {% for h in heights %}
+            {% set bar_pct = ((loop.index0 / loop.length) * 100) | round(1) %}
+            <span class="w-[2px] sm:w-[2.5px] lg:w-[2.5px] rounded-full transition-opacity duration-75 {{ accent_text }}"
+                :class="playbackProgress >= {{ bar_pct }} ? 'opacity-100' : 'opacity-35'"
+                style="height: {{ h }}%; background-color: currentColor;"></span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Controles: Silenciar/Solo (Desktop) + Control de Ganancia / Volumen -->
+    <div
+        class="flex items-center justify-between md:justify-end gap-2.5 sm:gap-3.5 lg:gap-4 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+        <!-- Grupo de botones Silenciar / Solo (Desktop >= md) -->
+        <div class="hidden md:inline-flex rounded-lg bg-slate-200/70 p-0.5 text-xs font-semibold text-slate-600">
+            <button type="button" @click="toggleMute('{{ key }}')"
+                class="px-2.5 sm:px-3 py-1 sm:py-1 rounded-md transition-all duration-150 cursor-pointer"
+                :class="tracks.{{ key }}.muted ? 'bg-rose-500 text-white font-bold shadow-xs' : 'text-slate-600 hover:bg-white hover:text-slate-900'">
+                Silenciar
+            </button>
+            <button type="button" @click="toggleSolo('{{ key }}')"
+                class="px-2.5 sm:px-3 py-1 sm:py-1 rounded-md transition-all duration-150 cursor-pointer"
+                :class="tracks.{{ key }}.solo ? 'bg-amber-400 text-slate-900 font-bold shadow-xs' : 'text-slate-600 hover:bg-white hover:text-slate-900'">
+                Solo
+            </button>
+        </div>
+
+        <!-- Slider de Ganancia / Volumen Compacto y Claro -->
+        <div class="flex items-center gap-2 w-full md:w-28 lg:w-32 xl:w-36">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+                stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H4v4h4l4 4V6z" />
+            </svg>
+            <input type="range" min="0" max="100" x-model="tracks.{{ key }}.volume"
+                @input="updateTrackVolume('{{ key }}')" :disabled="tracks.{{ key }}.muted"
+                class="w-full cursor-pointer accent-sky-500 h-2 rounded-lg">
+            <span class="text-xs font-mono font-bold text-slate-600 w-9 text-right shrink-0"
+                x-text="tracks.{{ key }}.muted ? 'MUTE' : tracks.{{ key }}.volume + '%'">{{ volume }}%</span>
+        </div>
+    </div>
+</div>
+{% endmacro %}

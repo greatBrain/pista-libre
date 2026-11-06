@@ -1,0 +1,96 @@
+/* ==========================================================================
+   Pista Libre — Estilos Base y Utilidades de UI
+   ========================================================================== */
+
+/* 1. Suavizado y Ajustes Globales */
+[x-cloak] {
+    display: none !important;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 2. Ocultar scrollbars donde sea necesario manteniendo scroll táctil */
+.scrollbar-none::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* 3. Sliders de Rango Personalizados (Volumen y Scrubber) */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: #e2e8f0;
+    border-radius: 9999px;
+    height: 4px;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #1e293b;
+    cursor: pointer;
+    border: 2px solid #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    background: #2563eb;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #1e293b;
+    cursor: pointer;
+    border: 2px solid #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* 4. Cabezal de Reproducción Vertical (Playhead) */
+.playhead-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 48%;
+    width: 2px;
+    background-color: #0f172a;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* 5. Tarjetas e Interactividad */
+.card-hover {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.06);
+}
+
+/* 6. Animación sutil de pulso para estado de grabación */
+@keyframes pulse-record {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.9); }
+}
+
+.animate-record-dot {
+    animation: pulse-record 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

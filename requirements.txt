@@ -1,0 +1,18 @@
+# Servidor Web y API
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.9.0
+python-multipart>=0.0.12
+jinja2>=3.1.4
+python-dotenv>=1.0.0
+
+# Motor de Separación de Audio con IA (Demucs + PyTorch + Codificación MP3)
+torch>=2.2.0
+demucs>=4.1.0
+lameenc>=1.7.0
+huggingface-hub>=0.25.0
+
+# Pruebas Automatizadas
+pytest>=8.3.0
+httpx>=0.27.0
+

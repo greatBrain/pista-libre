@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% from "components/track_card.html" import render_track %}
+
+{% block title %}Pista Libre — Sala de Ensayo • {{ song_info.title }}{% endblock %}
+
+{% block content %}
+<script id="song-config-data" type="application/json">{{ song_info | tojson }}</script>
+<div x-data="practiceRoom()"
+    class="w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 space-y-3 sm:space-y-3.5 mt-5 sm:mt-8 md:mt-18 lg:mt-22 xl:mt-24 2xl:mt-28">
+
+    <!-- Encabezado de la Sesión con Carátula, Metadatos y Acciones -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3.5">
+        <!-- Identidad de la Canción: Portada + Título + Artista + Badges -->
+        <div class="flex items-center gap-3 sm:gap-3.5 min-w-0 mb-4">
+            {% if song_info.cover_image_url %}
+            <div
+                class="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 xl:w-32 xl:h-32 rounded-lg overflow-hidden border border-slate-200/90 shadow-2xs shrink-0 bg-slate-900">
+                <img src="{{ song_info.cover_image_url }}" alt="{{ song_info.title }}"
+                    class="w-full h-full object-cover rounded-lg block"
+                    onerror="this.parentElement.style.display='none'">
+            </div>
+            {% endif %}
+            <div class="min-w-0 space-y-0.5">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h1
+                        class="text-xl sm:text-3xl lg:text-4xl font-extrabold text-gray-800 tracking-tight leading-snug">
+                        {{ song_info.title }}
+                    </h1>
+                </div>
+                <p class="text-xs sm:text-sm text-gray-500 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <span class="font-medium text-gray-700 text-md">{{ song_info.artist }}</span>
+                    <span>•</span>
+                    <span class="font-mono text-gray-400" x-text="totalTimeDisplay">{{ song_info.duration }}</span>
+                    {% if song_info.bpm %}
+                    <span>•</span>
+                    <span
+                        class="px-2 py-0.5 rounded-md bg-gray-200 text-gray-600 font-mono text-[13px] font-semibold">{{
+                        song_info.bpm }} BPM</span>
+                    {% endif %}
+                    {% if song_info.genre %}
+                    <span>•</span>
+                    <span class="text-gray-500 text-xs">{{ song_info.genre }}</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- Botones de Acción: Descargar Stems y Cambiar Canción -->
+        <div class="flex items-center gap-2 sm:gap-2.5 shrink-0 self-start sm:self-auto">
+            <!-- Descargar Stems (ZIP) -->
+            <a href="/download/stems-completos.zip{% if demo_id %}?demo={{ demo_id }}{% elif song_info.id not in ['custom'] %}?session={{ song_info.id }}{% endif %}" download
+                class="px-3.5 py-1.5 sm:py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm sm:text-md font-semibold shadow-xs hover:shadow-md transition-all flex items-center gap-2"
+                title="Descargar paquete de stems en ZIP">
+                <svg class="w-4 h-4 sm:w-6 sm:h-6 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Descargar stems</span>
+            </a>
+
+            <!-- Cambiar Canción / Volver al Inicio -->
+            <a href="/"
+                class="px-3.5 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs sm:text-sm font-semibold text-slate-600 shadow-2xs transition-all flex items-center gap-1.5"
+                title="Volver a la selección de pistas">
+                <svg class="w-4 h-4 sm:w-6 sm:h-6 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span class="hidden sm:inline">Cambiar canción</span>
+                <span class="sm:hidden">Volver</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Consola de Ensayo con Transport Bar y Pistas Multitrack -->
+    <div
+        class="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-900/[0.04] p-3.5 sm:p-4 lg:p-5 xl:p-6 space-y-2.5 sm:space-y-3 lg:space-y-3.5">
+
+        <!-- 1. Barra de Controles de Reproducción Master (Ubicada arriba de las pistas) -->
+        {% include "components/player_bar.html" %}
+
+        <!-- 2. Pistas de Audio con Cabezal Playhead Sincronizado -->
+        <div class="relative space-y-2 sm:space-y-2.5 lg:space-y-2.5 xl:space-y-3">
+            <!-- Cabezal Playhead Line sincronizado dinámicamente -->
+            <div class="hidden sm:block absolute top-0 bottom-0 w-0.5 bg-slate-900 z-10 pointer-events-none transition-all duration-100 ease-linear"
+                :style="'left: calc(' + (22 + (playbackProgress * 0.54)) + '%)'">
+                <div class="w-3 h-3 rounded-full bg-slate-900 border-2 border-white shadow-xs -ml-[5px] -mt-1">
+                </div>
+            </div>
+
+            <!-- 1. VOZ -->
+            {{ render_track("vocals", "Voz", "Vocaform • Pista Principal", "/assets/img/icons/voice-black.svg",
+            "text-sky-500", 80) }}
+
+            <!-- 2. BATERÍA -->
+            {{ render_track("drums", "Batería", "Batería Acústica • Stems", "/assets/img/icons/drums-black.svg",
+            "text-emerald-500", 75) }}
+
+            <!-- 3. BAJO -->
+            {{ render_track("bass", "Bajo", "Bajo Eléctrico • 4 Cuerdas", "/assets/img/icons/bass-black.svg",
+            "text-amber-500", 70) }}
+
+            <!-- 4. OTROS (Teclados / Guitarra) -->
+            {{ render_track("other", "Otros (Teclados/Guitarra)", "Teclados y Guitarra Rítmica",
+            "/assets/img/icons/guitar-black.svg", "text-purple-500", 65) }}
+        </div>
+    </div>
+</div>
+{% endblock %}

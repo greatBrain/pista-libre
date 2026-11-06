@@ -1,0 +1,144 @@
+<!-- Zona de Carga de Archivo (Dropzone de Estudio a Ancho Completo con Alpine.js) -->
+<div class="w-full space-y-2">
+    <!-- Contenedor Principal Dropzone / Tarjeta de Archivo Activo -->
+    <div @dragover.prevent="handleDragOver($event)" @dragenter.prevent="handleDragOver($event)"
+        @dragleave.prevent="handleDragLeave($event)" @drop.prevent="handleDrop($event)"
+        @click="if (!selectedFile) triggerBrowse()"        :class="{
+            'border-sky-500 bg-sky-50/80 ring-4 ring-sky-200/60 scale-[1.006]': isDragging,
+            'border-slate-300 bg-gradient-to-b from-white to-slate-50/70 shadow-card': selectedFile && !isDragging,
+            'border-slate-300 hover:border-sky-500 bg-gradient-to-b from-white to-slate-50/70 cursor-pointer shadow-card hover:shadow-card-hover': !selectedFile && !isDragging
+        }"
+        class="w-full border-2 border-dashed rounded-2xl sm:rounded-3xl py-5 sm:py-6 lg:py-5 xl:py-7 px-4 sm:px-6 text-center transition-all duration-200 group flex flex-col items-center justify-center gap-2 sm:gap-2.5 min-h-[200px] sm:min-h-[220px] lg:min-h-[260px] xl:min-h-[280px]">
+
+        <!-- Input Nativo Oculto (Disparado programáticamente vía $refs.fileInput) -->
+        <input type="file" x-ref="fileInput" @change="handleFileSelect($event)" accept=".mp3,.wav,.flac,.aac,.m4a,.ogg"
+            class="hidden" id="audio-file-input">
+
+        <!-- ======================================================== -->
+        <!-- ESTADO A: ZONA VACÍA (Sin archivo seleccionado)          -->
+        <!-- ======================================================== -->
+        <template x-if="!selectedFile">
+            <div class="flex flex-col items-center justify-center gap-2 sm:gap-2.5 w-full">
+                <!-- Icono de Archivo de Música -->
+                <div
+                    class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl bg-slate-100/90 border border-slate-200/60 group-hover:bg-sky-50 flex items-center justify-center p-2.5 transition-transform duration-200 group-hover:scale-105 shadow-2xs">
+                    <img src="/assets/img/icons/music-file.svg" alt="Archivo de música"
+                        class="w-full h-full object-contain">
+                </div>
+
+                <!-- Textos de Acción -->
+                <div class="space-y-0.5">
+                    <p class="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-700 leading-tight">
+                        <span x-show="!isDragging">Suelta tu archivo aquí</span>
+                        <span x-show="isDragging" class="text-sky-600 font-extrabold">¡Suelta tu audio aquí!</span>
+                    </p>
+                    <p class="text-md text-gray-500" x-show="!isDragging">
+                        o <button type="button" @click.stop="triggerBrowse()"
+                            class="text-sky-600 underline font-extrabold hover:text-sky-700 cursor-pointer inline focus:outline-none">Explora
+                            en tu equipo</button>
+                    </p>
+                    <p class="text-sm text-sky-600 font-medium" x-show="isDragging">
+                        Detectamos tu archivo, suéltalo para cargarlo
+                    </p>
+                </div>
+
+                <!-- Formatos Permitidos y Límite de Peso -->
+                <div class="flex flex-wrap items-center justify-center gap-1.5 text-[11px] sm:text-xs pt-0.5">
+                    <span
+                        class="px-2 py-0.5 rounded-md bg-slate-100 font-mono font-semibold text-gray-600 border border-slate-200/60">MP3</span>
+                    <span
+                        class="px-2 py-0.5 rounded-md bg-slate-100 font-mono font-semibold text-gray-600 border border-slate-200/60">WAV</span>
+                    <span
+                        class="px-2 py-0.5 rounded-md bg-slate-100 font-mono font-semibold text-gray-600 border border-slate-200/60">FLAC</span>
+                    <span
+                        class="px-2 py-0.5 rounded-md bg-slate-100 font-mono font-semibold text-gray-600 border border-slate-200/60">AAC</span>
+                    <span class="text-gray-400 text-[11px] pl-1">• Máximo 10MB</span>
+                </div>
+            </div>
+        </template>
+
+        <!-- ======================================================== -->
+        <!-- ESTADO B: ARCHIVO SELECCIONADO (Staging / Listo)         -->
+        <!-- ======================================================== -->
+        <template x-if="selectedFile">
+            <div class="flex flex-col items-center justify-center gap-2 sm:gap-2.5 w-full">
+                <!-- Icono de Música con Check Verde Superior de Validación -->
+                <div
+                    class="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl bg-slate-100/90 border border-slate-200/60 flex items-center justify-center p-2.5 shadow-2xs">
+                    <img src="/assets/img/icons/music-file.svg" alt="Archivo seleccionado"
+                        class="w-full h-full object-contain">
+
+                    <!-- Check verde discreto en el top del icono (archivo cargado y validado) -->
+                    <div class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center ring-2 ring-white shadow-xs"
+                        title="Canción cargada y validada">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Título del Archivo y Metadatos Homogéneos -->
+                <div class="space-y-1 max-w-full px-2 text-center">
+                    <p class="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-800 leading-tight tracking-tight truncate max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto"
+                        x-text="selectedFile ? selectedFile.name : ''"></p>
+
+                    <!-- Formato y Tamaño en el mismo estilo de badges que el estado previo -->
+                    <div class="flex items-center justify-center gap-1.5 text-[11px] sm:text-xs pt-0.5">
+                        <span
+                            class="px-2 py-0.5 rounded-md bg-slate-100 font-mono font-semibold text-gray-600 border border-slate-200/60"
+                            x-text="selectedFile ? selectedFile.extension : ''"></span>
+                        <span class="text-gray-400 text-[11px] pl-0.5">•</span>
+                        <span class="font-mono text-gray-500 font-medium text-[11px] sm:text-xs"
+                            x-text="selectedFile ? selectedFile.sizeFormatted : ''"></span>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción Secundarios y Sobrios (Sin competir con el CTA principal) -->
+                <div class="flex items-center justify-center gap-2 pt-1">
+                    <!-- Cambiar Canción -->
+                    <button type="button" @click.stop="triggerBrowse()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition cursor-pointer shadow-2xs"
+                        title="Seleccionar otra canción">
+                        <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>Cambiar canción</span>
+                    </button>
+
+                    <!-- Quitar Archivo -->
+                    <button type="button" @click.stop="removeFile()"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50/70 font-medium text-xs transition cursor-pointer"
+                        title="Quitar este archivo">
+                        <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        <span>Quitar</span>
+                    </button>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- Banner de Validación / Error en el Cliente -->
+    <div x-show="errorMessage" x-cloak
+        class="w-full max-w-xl mx-auto rounded-xl bg-amber-50/90 border border-amber-200/90 px-3.5 py-2.5 flex items-center justify-between gap-3 shadow-2xs text-amber-800 text-xs sm:text-sm">
+        <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span x-text="errorMessage" class="font-medium"></span>
+        </div>
+        <button type="button" @click="errorMessage = ''"
+            class="text-amber-500 hover:text-amber-800 p-1 rounded-md transition cursor-pointer" title="Cerrar aviso">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+</div>

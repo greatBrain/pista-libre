@@ -1,0 +1,100 @@
+<!-- Navbar Superior de Opciones (Desktop: barra horizontal fija | Mobile: header + aside desplegable) -->
+<header class="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+    <div
+        class="w-full max-w-[2160px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-14 h-16 flex items-center justify-between relative">
+
+        <!-- Izquierda: Solo Brand / Nombre del Producto -->
+        <div class="flex items-center">
+            <a href="/" class="flex items-center gap-2.5 group shrink-0">
+                <div
+                    class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white flex items-center justify-center shadow-xs p-1">
+                    <img src="/assets/img/icons/music-symbol.svg" alt="music symbol" class="w-12 h-12">
+                </div>
+                <span class="text-2xl font-extrabold tracking-tight text-gray-700">Pista Libre</span>
+            </a>
+        </div>
+
+        <!-- Centro: Botones de Opción Centrados (Desktop) -->
+        <nav class="hidden lg:flex items-center gap-1.5 absolute left-1/2 -translate-x-1/2">
+            <!-- 1. Inicio -->
+            <a href="/"
+                class="flex items-center gap-2 px-3.5 py-2 rounded-3xl text-md transition {% if active_tab == 'home' %}font-bold text-white bg-gray-800 shadow-xs{% else %}font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100/70{% endif %}">
+                <svg class="w-4 h-4 {% if active_tab == 'home' %}text-white{% else %}text-slate-500{% endif %}"
+                    fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span>Inicio</span>
+            </a>
+
+            <!-- 2. Sala de ensayo -->
+            <a href="/practice"
+                class="flex items-center gap-2 px-3.5 py-2 rounded-3xl text-md transition {% if active_tab == 'practice' %}font-bold text-white bg-gray-800 shadow-xs{% else %}font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100/70{% endif %}">
+                <svg class="w-4 h-4 {% if active_tab == 'practice' %}text-white{% else %}text-slate-500{% endif %}"
+                    fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>Sala de ensayo</span>
+            </a>
+
+            <!-- 3. Recientes -->
+            <a href="/#recientes"
+                class="flex items-center gap-2 px-3.5 py-2 rounded-3xl text-md font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 transition">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Recientes</span>
+            </a>
+        </nav>
+        <!-- Botón Hamburguesa para Móvil (< lg) -->
+        <div class="lg:hidden flex items-center gap-2">
+            <button type="button" @click="mobileMenuOpen = !mobileMenuOpen"
+                class="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition focus:outline-none"
+                aria-label="Abrir menú de navegación">
+                <svg x-show="!mobileMenuOpen" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <svg x-show="mobileMenuOpen" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+    </div>
+    <!-- Aside Desplegable para Móviles (< lg) -->
+    <div x-show="mobileMenuOpen" x-cloak @click.away="mobileMenuOpen = false"
+        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2"
+        x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
+        class="lg:hidden border-b border-slate-200 bg-white px-4 py-4 space-y-2 shadow-lg">
+        <a href="/"
+            class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold {% if active_tab == 'home' %}text-slate-900 bg-slate-100{% else %}text-slate-600 hover:bg-slate-50{% endif %}">
+            <svg class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>Inicio</span>
+        </a>
+
+        <a href="/practice"
+            class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold {% if active_tab == 'practice' %}text-slate-900 bg-slate-100{% else %}text-slate-600 hover:bg-slate-50{% endif %}">
+            <svg class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>Sala de ensayo</span>
+        </a>
+
+        <a href="/#recientes" @click="mobileMenuOpen = false"
+            class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50">
+            <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Recientes</span>
+        </a>
+    </div>
+</header>

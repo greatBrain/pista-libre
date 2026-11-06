@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Pista Libre{% endblock %}
+
+{% block content %}
+<div x-data="{
+        isProcessing: false,
+        processingProgress: 0,
+        processingStep: 'Inicializando motor...',
+        showDecisionModal: false,
+
+        // Estado local de archivo para Dropzone
+        selectedFile: null,
+        isDragging: false,
+        errorMessage: '',
+        allowedExtensions: ['.mp3', '.wav', '.flac', '.aac', '.m4a', '.ogg'],
+        maxFileSizeBytes: 10 * 1024 * 1024,
+
+        handleDragOver(e) {
+            this.isDragging = true;
+        },
+        handleDragLeave(e) {
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+                this.isDragging = false;
+            }
+        },
+        handleDrop(e) {
+            this.isDragging = false;
+            const files = e.dataTransfer ? e.dataTransfer.files : null;
+            if (files && files.length > 0) {
+                this.validateAndSetFile(files[0]);
+            }
+        },
+        handleFileSelect(e) {
+            const files = e.target ? e.target.files : null;
+            if (files && files.length > 0) {
+                this.validateAndSetFile(files[0]);
+            }
+        },
+        triggerBrowse() {
+            if (this.$refs.fileInput) {
+                this.$refs.fileInput.click();
+            }
+        },
+        validateAndSetFile(file) {
+            this.errorMessage = '';
+            if (!file) return;
+
+            // 1. Validación de tamaño (10MB máximo)
+            if (file.size > this.maxFileSizeBytes) {
+                this.errorMessage = 'El archivo supera el límite de 10MB (' + this.formatBytes(file.size) + '). Elige uno más ligero.';
+                this.clearFileInput();
+                return;
+            }
+
+            // 2. Validación de extensión permitida
+            const nameParts = file.name.split('.');
+            if (nameParts.length < 2) {
+                this.errorMessage = 'El archivo no tiene una extensión de audio reconocible.';
+                this.clearFileInput();
+                return;
+            }
+            const ext = '.' + nameParts.pop().toLowerCase();
+            if (!this.allowedExtensions.includes(ext)) {
+                this.errorMessage = 'Formato ' + ext.toUpperCase() + ' no soportado. Usa MP3, WAV, FLAC o AAC.';
+                this.clearFileInput();
+                return;
+            }
+
+            // 3. Sincronización con el input nativo vía DataTransfer
+            if (this.$refs.fileInput) {
+                try {
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    this.$refs.fileInput.files = dt.files;
+                } catch (err) {
+                    // Fallback seguro en caso de navegadores con políticas restringidas
+                }
+            }
+
+            // 4. Asignación al estado local reactivo
+            this.selectedFile = {
+                name: file.name,
+                sizeFormatted: this.formatBytes(file.size),
+                extension: ext.replace('.', '').toUpperCase(),
+                raw: file
+            };
+        },
+        removeFile() {
+            this.selectedFile = null;
+            this.errorMessage = '';
+            this.clearFileInput();
+        },
+        clearFileInput() {
+            if (this.$refs.fileInput) {
+                this.$refs.fileInput.value = '';
+            }
+        },
+        formatBytes(bytes) {
+            if (!bytes || bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        },
+        sessionId: null,
+        async startSeparation() {
+            if (!this.selectedFile || this.isProcessing) return;
+            this.isProcessing = true;
+            this.errorMessage = '';
+            this.processingProgress = 15;
+            this.processingStep = 'Enviando y validando audio en el servidor...';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', this.selectedFile.raw);
+
+                const response = await fetch('/api/sessions/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({ detail: 'Error en el servidor' }));
+                    throw new Error(errData.detail || 'Error al validar el archivo');
+                }
+                const session = await response.json();
+                this.sessionId = session.session_id;
+
+                this.processingProgress = 50;
+                this.processingStep = 'Procesando pistas (vocals, drums, bass, other)...';
+
+                const sepResponse = await fetch(`/api/sessions/${this.sessionId}/separate`, {
+                    method: 'POST'
+                });
+
+                if (!sepResponse.ok) {
+                    const errData = await sepResponse.json().catch(() => ({ detail: 'Error en la separación' }));
+                    throw new Error(errData.detail || 'No se pudieron separar las pistas');
+                }
+
+                this.processingProgress = 100;
+                this.processingStep = '¡Separación completada con éxito!';
+                this.isProcessing = false;
+                this.showDecisionModal = true;
+
+            } catch (err) {
+                this.isProcessing = false;
+                this.errorMessage = err.message || 'Error al conectar con el servidor.';
+            }
+        }
+    }" class="w-full flex flex-col lg:flex-row min-h-[calc(100vh-4rem)]">
+
+    <!-- 1. PANEL LATERAL IZQUIERDO: ACCESO DIRECTO A SALAS DE ENSAYO (Desktop: columna lateral | Móvil: carrusel swipe) -->
+    <aside
+        class="w-full lg:w-96 xl:w-105 2xl:w-[460px] lg:shrink-0 bg-gray-300/50 border-b lg:border-b-0 lg:border-r border-slate-200/90 p-3.5 sm:p-4 lg:p-5 xl:p-6 flex flex-col justify-start lg:min-h-[calc(100vh-4rem)] lg:sticky lg:top-0 lg:self-start overflow-hidden lg:overflow-y-auto">
+        {% include "components/demo_sessions.html" %}
+    </aside>
+
+    <!-- 2. CONTENEDOR PRINCIPAL: TOTALMENTE CENTRADO (Dropzone, Pistas y Botón de Acción) -->
+    <div
+        class="flex-1 min-w-0 px-4 py-3 sm:px-6 sm:py-4 lg:px-8 lg:py-4 xl:px-12 xl:py-6 flex flex-col items-center justify-center">
+        <div
+            class="w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto space-y-3 sm:space-y-3.5 lg:space-y-3.5 xl:space-y-5">
+
+            <!-- Encabezado de la Pantalla Principal -->
+            <div class="text-center max-w-4xl mx-auto pt-0.5 sm:pt-1">
+                <h1
+                    class="text-2xl sm:text-3xl lg:text-4xl xl:text-6xl font-extrabold text-gray-800 tracking-tight leading-tight">
+                    Separa tu música en <span class="text-sky-600">pistas individuales</span>
+                </h1>
+                <p class="text-md lg:text-lg text-gray-700 mt-1">
+                    Sube una canción y el sistema generará cuatro pistas independientes para que ensayes a tu gusto.
+                </p>
+            </div>
+
+            <!-- Componente 1: Zona de Arrastre de Audio Expandida y Centrada -->
+            {% include "components/dropzone.html" %}
+
+            <!-- Componente 2: Selector de Instrumentos / Pistas que obtendrás -->
+            {% include "components/instrument_selector.html" %}
+
+            <!-- Botón de Acción Principal y Barra de Progreso de Separación -->
+            <div class="pt-1 flex flex-col items-center justify-center gap-2.5">
+                <button type="button" @click="startSeparation()" :disabled="!selectedFile || isProcessing"
+                    :class="!selectedFile || isProcessing
+                        ? 'opacity-40 cursor-not-allowed bg-slate-300 hover:bg-slate-300 text-slate-500 shadow-none'
+                        : 'bg-brand-600 hover:bg-brand-700 active:scale-95 text-white shadow-md hover:shadow-lg hover:shadow-brand-500/25 cursor-pointer'"
+                    class="w-full sm:w-auto sm:min-w-[280px] px-10 sm:px-14 py-3 sm:py-3.5 rounded-full font-bold text-sm sm:text-base transition-all duration-200 flex items-center justify-center gap-2.5">
+                    <template x-if="!isProcessing">
+                        <span class="inline-flex items-center gap-2.5">
+                            <span>Separar Pistas</span>
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" fill="none" stroke="currentColor"
+                                stroke-width="2.2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </span>
+                    </template>
+                    <template x-if="isProcessing">
+                        <span class="inline-flex items-center gap-2.5">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4">
+                                </circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            <span>Separando Pistas...</span>
+                        </span>
+                    </template>
+                </button>
+                <!-- Microtexto de guía cuando no hay archivo seleccionado -->
+                <!-- <p x-show="!selectedFile && !isProcessing" class="text-xs text-gray-500 font-medium">
+                    Carga una pista de audio arriba para habilitar la separación
+                </p> -->
+                <!-- Micro-feedback de Progreso de Separación -->
+                <div x-show="isProcessing" x-cloak class="w-full max-w-md space-y-2 text-center transition">
+                    <div class="flex items-center justify-between text-xs font-semibold text-slate-600">
+                        <span x-text="processingStep"></span>
+                        <span x-text="processingProgress + '%'" class="tabular-nums font-mono text-brand-600"></span>
+                    </div>
+                    <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                        <div class="h-full bg-brand-600 transition-all duration-500 ease-out"
+                            :style="`width: ${processingProgress}%`"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Componente 3: Hub / Modal de Decisión Post-Separación -->
+    {% include "components/modal_decision.html" %}
+</div>
+{% endblock %}

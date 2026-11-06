@@ -1,0 +1,73 @@
+# ============================================================================
+# Python (Bytecode, cachés de compilación y pruebas)
+# ============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# ============================================================================
+# Entornos virtuales (se instalan localmente en cada máquina)
+# ============================================================================
+.venv/
+venv/
+ENV/
+env/
+
+# ============================================================================
+# Variables de entorno y configuración local
+# ============================================================================
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ============================================================================
+# Base de datos local SQLite
+# ============================================================================
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# ============================================================================
+# Almacenamiento de audio, sesiones de usuario y pesos de modelos IA
+# ============================================================================
+backend/storage/*
+!backend/storage/.gitkeep
+!backend/storage/demos/
+
+# Excluir archivos de audio pesados incluso dentro de la carpeta demos
+backend/storage/demos/**/*.mp3
+backend/storage/demos/**/*.wav
+backend/storage/demos/**/*.flac
+backend/storage/demos/**/*.m4a
+backend/storage/demos/**/*.ogg
+backend/storage/demos/**/*.aac
+
+# Pesos de modelos PyTorch / Demucs si se descargaran en el directorio
+*.th
+*.pt
+*.pth
+*.onnx
+*.safetensors
+
+# ============================================================================
+# Sistema operativo, logs y editores
+# ============================================================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*.log

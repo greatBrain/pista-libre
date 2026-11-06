@@ -1,0 +1,247 @@
+<!-- ============================================================ -->
+<!-- PANEL LATERAL: ACCESO DIRECTO A SALAS DE ENSAYO              -->
+<!-- ============================================================ -->
+<div class="flex flex-col h-full justify-between space-y-3 lg:space-y-4">
+    <div x-data="{ open: true }" class="space-y-3 lg:space-y-4 mt-0.5 lg:mt-1">
+        <!-- Encabezado con jerarquía clara y menú desplegable -->
+        <button type="button" @click="open = !open"
+            class="w-full space-y-0.5 pb-2.5 lg:pb-3 border-b border-slate-200/80 flex items-center justify-between cursor-pointer group text-left transition-colors focus:outline-none">
+            <h2
+                class="text-lg sm:text-xl lg:text-2xl font-black text-gray-700 group-hover:text-sky-600 transition-colors tracking-tight flex items-center gap-2">
+                <span>Salas de prueba</span>
+                <img src="/assets/img/icons/dropdown-arrow.svg" alt=""
+                    class="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200"
+                    :class="open ? 'rotate-0' : '-rotate-90'">
+            </h2>
+            <span
+                class="lg:hidden text-[11px] font-semibold text-slate-500 bg-white/80 border border-slate-300/80 px-2.5 py-0.5 rounded-full flex items-center gap-1 shrink-0 shadow-2xs">
+                <svg class="w-3 h-3 text-sky-600 animate-pulse" fill="none" stroke="currentColor" stroke-width="2.2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+                <span>Desliza</span>
+            </span>
+        </button>
+
+        <!-- Lista de Canciones Demo (En móvil: swipe nativo | En desktop: columna compacta vertical) -->
+        <div x-show="open" x-transition.duration.200ms
+            class="flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-3 sm:gap-3.5 lg:gap-0 lg:space-y-3 snap-x snap-mandatory scroll-smooth scrollbar-none pb-2 lg:pb-0 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
+            {% if demo_sessions %}
+            {% for demo in demo_sessions %}
+            <a href="/practice?demo={{ demo.id }}" data-demo-id="{{ demo.id }}"
+                title="Entrar a la sala de ensayo de {{ demo.title }}"
+                class="group relative flex items-stretch rounded-xl bg-white border border-sky-400 hover:border-sky-400 shadow-xs hover:shadow-xl hover:shadow-sky-500/10 transition-all duration-200 overflow-hidden min-h-[96px] sm:min-h-[104px] lg:min-h-[108px] xl:min-h-[114px] w-[80vw] max-w-[420px] lg:w-full shrink-0 snap-start -translate-y-0 hover:-translate-y-0.5">
+
+                <!-- Imagen pegada al borde izquierdo -->
+                <div class="relative w-24 sm:w-28 lg:w-28 xl:w-32 shrink-0 bg-slate-900 overflow-hidden">
+                    <img src="{{ demo.cover_image_url }}" alt="{{ demo.title }} - {{ demo.artist }}"
+                        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy" onerror="this.src='/assets/img/icons/music-file.svg'">
+                </div>
+
+                <!-- Contenido a la derecha con padding calibrado -->
+                <div class="p-2.5 sm:p-3 lg:p-3 xl:p-3.5 flex-1 min-w-0 flex flex-col justify-between">
+                    <!-- Título y Artista -->
+                    <div class="min-w-0 space-y-0.5">
+                        <h3
+                            class="text-sm sm:text-base font-extrabold text-slate-800 group-hover:text-sky-600 transition-colors leading-snug truncate">
+                            {{ demo.title }}
+                        </h3>
+                        <p class="text-xs text-slate-500 font-medium truncate">
+                            {{ demo.artist }}
+                        </p>
+                    </div>
+
+                    <!-- Fila Inferior: Duración y Botón Play -->
+                    <div class="pt-1.5 flex items-center justify-between gap-2 border-t border-slate-100">
+                        <span
+                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-mono text-xs font-semibold">
+                            <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+                                stroke-width="2" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" />
+                                <path stroke-linecap="round" d="M12 6v6l4 2" />
+                            </svg>
+                            <span>{{ demo.duration }}</span>
+                        </span>
+
+                        <div
+                            class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-50 border border-slate-200/90 text-slate-400 group-hover:bg-sky-600 group-hover:border-sky-600 group-hover:text-white flex items-center justify-center shrink-0 shadow-2xs group-hover:shadow-md transition-all duration-200">
+                            <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-current ml-0.5" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+            {% else %}
+            <!-- 1. Solution — Hillsong United -->
+            <a href="/practice?demo=solution"
+                class="group relative flex items-stretch rounded-xl bg-white border border-sky-400 hover:border-sky-400 shadow-xs hover:shadow-xl hover:shadow-sky-500/10 transition-all duration-200 overflow-hidden min-h-[96px] sm:min-h-[104px] lg:min-h-[108px] xl:min-h-[114px] w-[82vw] max-w-[325px] sm:w-[350px] lg:w-full shrink-0 snap-start">
+                <div class="relative w-24 sm:w-28 lg:w-28 xl:w-32 shrink-0 bg-slate-900 overflow-hidden">
+                    <img src="/demos/solution/Solution-hillsong.webp" alt="Solution - Hillsong United"
+                        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy">
+                </div>
+                <div class="p-2.5 sm:p-3 lg:p-3 xl:p-3.5 flex-1 min-w-0 flex flex-col justify-between">
+                    <div class="min-w-0 space-y-0.5">
+                        <h3
+                            class="text-sm sm:text-base font-extrabold text-slate-800 group-hover:text-sky-600 transition-colors leading-tight truncate">
+                            Solution
+                        </h3>
+                        <p class="text-xs text-slate-500 font-medium truncate">
+                            Hillsong United
+                        </p>
+                    </div>
+                    <div class="pt-1.5 flex items-center justify-between gap-2 border-t border-slate-100">
+                        <span
+                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-mono text-xs font-semibold">
+                            <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+                                stroke-width="2" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" />
+                                <path stroke-linecap="round" d="M12 6v6l4 2" />
+                            </svg>
+                            <span>5:38</span>
+                        </span>
+                        <div
+                            class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-50 border border-slate-200/90 text-slate-400 group-hover:bg-sky-600 group-hover:border-sky-600 group-hover:text-white flex items-center justify-center shrink-0 shadow-2xs group-hover:shadow-md transition-all duration-200">
+                            <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-current ml-0.5" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- 2. You Rock My World — Michael Jackson -->
+            <a href="/practice?demo=you-rock-my-world"
+                class="group relative flex items-stretch rounded-xl bg-white border border-sky-400 hover:border-sky-400 shadow-xs hover:shadow-xl hover:shadow-sky-500/10 transition-all duration-200 overflow-hidden min-h-[96px] sm:min-h-[104px] lg:min-h-[108px] xl:min-h-[114px] w-[82vw] max-w-[325px] sm:w-[350px] lg:w-full shrink-0 snap-start">
+                <div class="relative w-24 sm:w-28 lg:w-28 xl:w-32 shrink-0 bg-slate-900 overflow-hidden">
+                    <img src="/demos/you-rock-my-world/you-rock-my-world.webp" alt="You Rock My World - Michael Jackson"
+                        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy">
+                </div>
+                <div class="p-2.5 sm:p-3 lg:p-3 xl:p-3.5 flex-1 min-w-0 flex flex-col justify-between">
+                    <div class="min-w-0 space-y-0.5">
+                        <h3
+                            class="text-sm sm:text-base font-extrabold text-slate-800 group-hover:text-sky-600 transition-colors leading-snug">
+                            You Rock My World
+                        </h3>
+                        <p class="text-xs text-slate-500 font-medium truncate">
+                            Michael Jackson
+                        </p>
+                    </div>
+                    <div class="pt-1.5 flex items-center justify-between gap-2 border-t border-slate-100">
+                        <span
+                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-mono text-xs font-semibold">
+                            <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+                                stroke-width="2" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" />
+                                <path stroke-linecap="round" d="M12 6v6l4 2" />
+                            </svg>
+                            <span>5:08</span>
+                        </span>
+                        <div
+                            class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-50 border border-slate-200/90 text-slate-400 group-hover:bg-sky-600 group-hover:border-sky-600 group-hover:text-white flex items-center justify-center shrink-0 shadow-2xs group-hover:shadow-md transition-all duration-200">
+                            <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-current ml-0.5" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- 3. Aquí estoy yo — Jesús Adrián Romero -->
+            <a href="/practice?demo=aqui-estoy-yo"
+                class="group relative flex items-stretch rounded-xl bg-white border border-sky-400 hover:border-sky-400 shadow-xs hover:shadow-xl hover:shadow-sky-500/10 transition-all duration-200 overflow-hidden min-h-[96px] sm:min-h-[104px] lg:min-h-[108px] xl:min-h-[114px] w-[82vw] max-w-[325px] sm:w-[350px] lg:w-full shrink-0 snap-start">
+                <div class="relative w-24 sm:w-28 lg:w-28 xl:w-32 shrink-0 bg-slate-900 overflow-hidden">
+                    <img src="/demos/aqui-estoy-yo/aqui-estoy-yo.webp" alt="Aquí estoy yo - Jesús Adrián Romero"
+                        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy">
+                </div>
+                <div class="p-2.5 sm:p-3 lg:p-3 xl:p-3.5 flex-1 min-w-0 flex flex-col justify-between">
+                    <div class="min-w-0 space-y-0.5">
+                        <h3
+                            class="text-sm sm:text-base font-extrabold text-slate-800 group-hover:text-sky-600 transition-colors leading-tight truncate">
+                            Aquí estoy yo
+                        </h3>
+                        <p class="text-xs text-slate-500 font-medium truncate">
+                            Jesús Adrián Romero
+                        </p>
+                    </div>
+                    <div class="pt-1.5 flex items-center justify-between gap-2 border-t border-slate-100">
+                        <span
+                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-mono text-xs font-semibold">
+                            <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+                                stroke-width="2" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" />
+                                <path stroke-linecap="round" d="M12 6v6l4 2" />
+                            </svg>
+                            <span>4:18</span>
+                        </span>
+                        <div
+                            class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-50 border border-slate-200/90 text-slate-400 group-hover:bg-sky-600 group-hover:border-sky-600 group-hover:text-white flex items-center justify-center shrink-0 shadow-2xs group-hover:shadow-md transition-all duration-200">
+                            <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-current ml-0.5" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Aprovechamiento del espacio inferior: Salas personalizadas del usuario -->
+    <div id="recientes" x-data="{ open: true }" class="pt-2.5 lg:pt-3 border-t border-slate-200/80 mt-2 lg:mt-3">
+        <div class="border-t border-gray-400"></div>
+        <button type="button" @click="open = !open"
+            class="w-full flex items-center justify-between cursor-pointer group text-left transition-colors pt-2 focus:outline-none">
+            <h2
+                class="text-lg sm:text-xl lg:text-2xl font-black text-gray-700 group-hover:text-sky-600 transition-colors tracking-tight flex items-center gap-2">
+                <span>Salas creadas por mí</span>
+                <img src="/assets/img/icons/dropdown-arrow.svg" alt=""
+                    class="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200"
+                    :class="open ? 'rotate-0' : '-rotate-90'">
+            </h2>
+            {% if user_sessions %}
+            <span class="px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 font-mono text-xs font-bold">
+                {{ user_sessions | length }}
+            </span>
+            {% endif %}
+        </button>
+        <div x-show="open" x-transition.duration.200ms class="pt-2.5 space-y-2">
+            {% if user_sessions %}
+            {% for u_session in user_sessions %}
+            <a href="/practice?session={{ u_session.session_id }}"
+                title="Abrir sala de ensayo: {{ u_session.original_filename }}"
+                class="group flex items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl bg-white border border-slate-200/90 hover:border-sky-400 shadow-2xs hover:shadow-md transition-all duration-150">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div
+                        class="w-9 h-9 rounded-lg bg-sky-50 border border-sky-200/80 flex items-center justify-center p-1.5 shrink-0">
+                        <img src="/assets/img/icons/music-file.svg" alt="" class="w-full h-full object-contain">
+                    </div>
+                    <div class="min-w-0">
+                        <p
+                            class="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-sky-600 transition-colors truncate">
+                            {{ u_session.original_filename.rsplit('.', 1)[0] | replace('_', ' ') | title }}
+                        </p>
+                        <p class="text-[11px] text-emerald-600 font-semibold font-mono">
+                            4 pistas listas
+                        </p>
+                    </div>
+                </div>
+                <div
+                    class="w-7 h-7 rounded-full bg-slate-50 border border-slate-200/90 text-slate-400 group-hover:bg-sky-600 group-hover:border-sky-600 group-hover:text-white flex items-center justify-center shrink-0 transition-all">
+                    <svg class="w-3 h-3 fill-current ml-0.5" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                    </svg>
+                </div>
+            </a>
+            {% endfor %}
+            {% else %}
+            <p class="text-xs text-slate-500 italic">No tienes salas personalizadas aún.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
