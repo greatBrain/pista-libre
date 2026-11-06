@@ -1,64 +1,38 @@
 # 🎸 Pista Libre
 
-**Pista Libre** es tu sala de ensayo musical en casa.
+**Pista Libre** is your personal, at-home rehearsal space.
 
-Es una aplicación web local pensada para músicos, cantantes y estudiantes que quieren practicar sus canciones favoritas como si tocaran con una banda real. Subes cualquier canción desde tu computadora, la inteligencia artificial la divide automáticamente en **4 pistas independientes** (**Voz, Batería, Bajo y Otros instrumentos**) y entras a una sala de ensayo interactiva donde puedes silenciar tu propio instrumento para tocar encima, aislar una pista para escuchar cada detalle o descargar los audios por separado.
-
----
-
-## ✨ ¿Qué puedes hacer con Pista Libre?
-
-- **Separar cualquier canción:** Sube un archivo de audio (`.mp3`, `.wav`, `.flac`, `.m4a`, `.ogg`, `.aac`) y obtén sus 4 pistas limpias en pocos minutos.
-- **Ensayar a tu medida:** Silencia (*Mute*) la pista de tu instrumento para tomar su lugar en la banda, o usa *Solo* para estudiar una línea específica de bajo, voz o batería.
-- **Mezclar en tiempo real:** Ajusta el volumen independiente de cada instrumento con sincronización perfecta desde tu navegador.
-- **Descargar las pistas:** Guarda en tu equipo cualquiera de las pistas por separado en formato MP3.
-- **Sin esperas repetidas:** Si vuelves a subir una canción que ya habías separado antes, la aplicación la reconoce al instante sin procesarla de nuevo.
+It is a local web app built for musicians, vocalists, and students who want to practice along with their favorite songs as if playing with a full band. Simply upload any track from your computer, and the AI will automatically split it into **4 separate stems** (**Vocals, Drums, Bass, and Other**). From there, step into an interactive practice room where you can mute your own instrument to play along, solo a specific track to catch every detail, or export the separated stems directly to your machine.
 
 ---
 
-## 🚀 Instalación y Uso en Local
+## ✨ Features
 
-### 1. Requisitos previos
-- **Python 3.10 o superior** instalado en tu computadora.
-- **FFmpeg** instalado en el sistema (necesario para leer y procesar formatos de audio con Demucs).
+- **Split Any Song:** Upload an audio file (`.mp3`, `.wav`, `.flac`, `.m4a`, `.ogg`, `.aac`) and get 4 clean stems in just a few minutes.
+- **Practice Your Way:** Mute your instrument's track to sit in with the band, or solo a specific bassline, vocal run, or drum groove to study it up close.
+- **Real-Time Mixing:** Fine-tune the volume of each individual stem with seamless playback sync right in your browser.
+- **Export Stems:** Save any separated track directly to your computer as an MP3.
+- **Instant Cache:** Re-uploading a song you've processed before? The app recognizes it instantly, skipping the wait.
 
-### 2. Clonar e instalar dependencias
+---
 
-Abre una terminal en la carpeta del proyecto y ejecuta:
+## 🚀 Local Setup & Installation
+
+### 1. Prerequisites
+- **Python 3.10 or higher** installed on your system.
+- **FFmpeg** installed and accessible via your system PATH (required by Demucs for audio processing).
+
+### 2. Clone & Install Dependencies
+
+Open a terminal in the project directory and run:
 
 ```powershell
-# 1. Crear el entorno virtual
+# 1. Create a virtual environment
 python -m venv .venv
 
-# 2. Activar el entorno virtual (en Windows PowerShell)
+# 2. Activate the virtual environment (Windows PowerShell)
 .\.venv\Scripts\Activate.ps1
-# (En Linux / macOS: source .venv/bin/activate)
+# (Linux / macOS: source .venv/bin/activate)
 
-# 3. Instalar las librerías necesarias
+# 3. Install required packages
 pip install -r requirements.txt
-```
-
-*(Opcional)* Si deseas personalizar variables de entorno, haz una copia del archivo de ejemplo:
-```powershell
-Copy-Item .env.example .env
-```
-
-### 3. Iniciar la aplicación
-
-```powershell
-uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-Abre tu navegador y entra a: **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
-
-> **Nota:** La primera vez que separes una canción, el sistema descargará automáticamente el modelo de inteligencia artificial (*Demucs*). A partir de ahí, todo funcionará 100% en tu equipo sin depender de internet.
-
----
-
-## 🧪 Ejecutar Pruebas
-
-Para verificar que todo el sistema está funcionando correctamente:
-
-```powershell
-pytest
-```
