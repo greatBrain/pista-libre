@@ -8,7 +8,7 @@ python-dotenv>=1.0.0
 
 # Motor de Separación de Audio con IA (Demucs + PyTorch + Codificación MP3)
 torch>=2.2.0
-demucs>=4.1.0
+demucs>=4
 lameenc>=1.7.0
 huggingface-hub>=0.25.0
 
