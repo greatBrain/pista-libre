@@ -25,42 +25,66 @@ body {
     scrollbar-width: none;
 }
 
-/* 3. Sliders de Rango Personalizados (Volumen y Scrubber) */
+/* 3. Sliders de Rango Personalizados (Volumen, Scrubber y Ganancia por pista)
+   Por qué: Los inputs[type=range] nativos son inconsistentes entre browsers.
+   Qué resuelve: Look profesional de consola de audio con thumb responsivo.
+   Alternativas rechazadas: librería JS de sliders — innecesaria para este caso. */
 input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
     background: #e2e8f0;
     border-radius: 9999px;
-    height: 4px;
+    height: 5px;
     outline: none;
+    transition: background 0.15s ease;
 }
 
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    background: #1e293b;
+    background: #0f172a;
     cursor: pointer;
     border: 2px solid #ffffff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    transition: transform 0.15s ease, background 0.15s ease;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+    transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
 input[type="range"]::-webkit-slider-thumb:hover {
     transform: scale(1.2);
     background: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
 }
 
 input[type="range"]::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    background: #1e293b;
+    background: #0f172a;
     cursor: pointer;
     border: 2px solid #ffffff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    background: #2563eb;
+}
+
+/* Scrubber principal: thumb azul más grande para mejor usabilidad */
+input[type="range"].accent-blue-600::-webkit-slider-thumb {
+    background: #2563eb;
+    width: 16px;
+    height: 16px;
+    box-shadow: 0 1px 6px rgba(37, 99, 235, 0.35);
+}
+
+input[type="range"].accent-blue-600::-webkit-slider-thumb:hover {
+    background: #1d4ed8;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
 }
 
 /* 4. Cabezal de Reproducción Vertical (Playhead) */
@@ -75,7 +99,9 @@ input[type="range"]::-moz-range-thumb {
     pointer-events: none;
 }
 
-/* 5. Tarjetas e Interactividad */
+/* 5. Tarjetas e Interactividad
+   Por qué: Tailwind no soporta curvas de animación cúbicas específicas via clase.
+   Qué resuelve: Efecto "lift" más natural y físico en hover de cards. */
 .card-hover {
     transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
 }
@@ -93,4 +119,19 @@ input[type="range"]::-moz-range-thumb {
 
 .animate-record-dot {
     animation: pulse-record 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 7. Barra lateral de acento de color en track_card
+   Por qué: Da identidad visual inmediata por instrumento sin sobrecargar el fondo.
+   Qué resuelve: Diferenciación entre las 4 pistas de un vistazo.
+   Alternativas rechazadas: fondo tonal completo en la card — demasiado ruido visual
+   en la consola de edición donde el foco debe estar en la waveform. */
+.track-card-accent-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 4px 0 0 4px;
+    opacity: 0.85;
 }
