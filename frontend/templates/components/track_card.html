@@ -4,10 +4,10 @@
 
 {# Derivar clases de tono según el accent para el contenedor del icono y el borde lateral #}
 {% if 'blue' in accent_text %}
-  {% set icon_bg = 'bg-blue-300/70 border-blue-200/80' %}
+  {% set icon_bg = 'bg-blue-600 border-blue-600' %}
   {% set left_bar = 'bg-blue-500' %}
 {% elif 'teal' in accent_text %}
-  {% set icon_bg = 'bg-teal-200/70 border-teal-200/80' %}
+  {% set icon_bg = 'bg-teal-600 border-teal-600' %}
   {% set left_bar = 'bg-teal-500' %}
 {% elif 'purple' in accent_text %}
   {% set icon_bg = 'bg-indigo-300/70 border-purple-200/80' %}
@@ -20,7 +20,7 @@
   {% set left_bar = 'bg-slate-400' %}
 {% endif %}
 
-<div class="relative bg-gray-100 hover:bg-gray-200/50 border border-slate-300/80 hover:border-slate-300/80 rounded-xl p-3 sm:p-3.5 lg:py-3 lg:px-5 xl:px-6 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 lg:gap-6 overflow-hidden shadow-xs hover:shadow-md transition-all duration-200 sm:min-h-[100px] md:min-h-[120px] lg:min-h-[140px] "
+<div class="relative bg-gray-100 hover:bg-gray-200/50 border border-gray-400/80 hover:border-slate-300/80 rounded-xl p-3 sm:p-3.5 lg:py-3 lg:px-5 xl:px-6 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 lg:gap-6 overflow-hidden shadow-xs hover:shadow-md transition-all duration-200 sm:min-h-[120px] md:min-h-[140px] lg:min-h-[160px] "
     :class="{'opacity-40 grayscale-[25%]': isTrackDimmed('{{ key }}')}">
 
     <!-- Acento lateral de color de stem: barra fina izquierda -->
@@ -98,7 +98,7 @@
 
         <!-- Slider de Ganancia / Volumen Compacto y Claro -->
         <div class="flex items-center gap-2 w-full md:w-28 lg:w-32 xl:w-36">
-            <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+            <svg class="w-7 h-7 text-gray-600 shrink-0" fill="none" stroke="currentColor"
                 stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round"
                     d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H4v4h4l4 4V6z" />

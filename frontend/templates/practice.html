@@ -6,7 +6,7 @@
 {% block content %}
 <script id="song-config-data" type="application/json">{{ song_info | tojson }}</script>
 <div x-data="practiceRoom()"
-    class="w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 lg:py-8 space-y-4 sm:space-y-5">
+    class="w-full max-w-7xl xl:max-w-8xl 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 lg:py-8 space-y-4 sm:space-y-5">
 
     <!-- Encabezado de la Sesión con Carátula, Metadatos y Acciones -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -20,10 +20,10 @@
                     onerror="this.parentElement.style.display='none'">
             </div>
             {% endif %}
-            <div class="min-w-0 space-y-1">
+            <div class="min-w-0 space-y-2">
                 <div class="flex flex-wrap items-center gap-2">
                     <h1
-                        class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-snug">
+                        class="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-800 tracking-tight leading-snug">
                         {{ song_info.title }}
                     </h1>
                 </div>
@@ -36,11 +36,7 @@
                     <span
                         class="px-2 py-0.5 rounded-lg bg-blue-100/80 text-blue-700 border border-blue-200/70 font-mono text-xs font-bold">{{
                         song_info.bpm }} BPM</span>
-                    {% endif %}
-                    {% if song_info.genre %}
-                    <span class="text-slate-300">•</span>
-                    <span class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 font-medium text-xs border border-slate-200/60">{{ song_info.genre }}</span>
-                    {% endif %}
+                    {% endif %}                    
                 </p>
             </div>
         </div>

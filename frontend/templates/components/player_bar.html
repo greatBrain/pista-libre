@@ -1,6 +1,6 @@
 <!-- Barra de Controles de Reproducción / Master Transport Console -->
 <div
-    class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-3 sm:pb-3.5 border-b border-slate-200/70">
+    class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-6 border-b border-slate-300/70">
     <!-- 1. Play / Pause + Reiniciar + Reloj de Tiempo -->
     <div class="flex items-center justify-between sm:justify-start gap-2.5 sm:gap-3.5">
         <div class="flex items-center gap-2 sm:gap-2.5">
@@ -52,23 +52,16 @@
     <div class="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 shrink-0">
         <!-- Control de Volumen Máster -->
         <div
-            class="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-2.5 sm:px-3 py-1.5 rounded-lg">
-            <svg class="w-6 h-6 text-slate-500 shrink-0" fill="none" stroke="currentColor"
+            class="flex items-center gap-2 bg-slate-50 border border-blue-400/80 px-2.5 sm:px-3 py-1.5 rounded-lg">
+            <svg class="w-10 h-10 text-gray-500 shrink-0" fill="none" stroke="currentColor"
                 stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round"
                     d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H4v4h4l4 4V6z" />
             </svg>
             <input type="range" min="0" max="100" x-model="masterVolume" @input="applyMixState()"
-                class="w-20 sm:w-24 lg:w-28 accent-slate-800 cursor-pointer h-2">
-            <span class="text-xs font-mono font-bold text-slate-700 w-9 text-right"
+                class="w-24 accent-slate-800 cursor-pointer h-2">
+            <span class="text-md font-mono font-bold text-slate-700 w-9 text-right"
                 x-text="masterVolume + '%'">85%</span>
         </div>
-
-        <!-- Botón Resetear canales -->
-        <button type="button" @click="resetAllTracks()"
-            class="px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-xs font-bold transition cursor-pointer shadow-2xs"
-            title="Restablecer todos los canales a estado normal">
-            Reset
-        </button>
     </div>
 </div>

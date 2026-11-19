@@ -21,16 +21,16 @@
             <div class="flex flex-col items-center justify-center gap-2.5 sm:gap-3 w-full">
                 <!-- Icono de Archivo de Música con contenedor moderno -->
                 <div
-                    class="w-13 h-13 sm:w-14 sm:h-14 rounded-xl bg-white border border-slate-200/80 group-hover:border-blue-200 flex items-center justify-center p-3 transition-transform duration-200 group-hover:scale-105 shadow-xs">
+                    class="w-17 h-17 rounded-md bg-white border border-slate-200/80 group-hover:border-blue-200 flex items-center justify-center p-3 transition-transform duration-200 group-hover:scale-105 shadow-xs">
                     <img src="/assets/img/icons/music-file.svg" alt="Archivo de música"
                         class="w-full h-full object-contain">
                 </div>
 
                 <!-- Textos de Acción -->
                 <div class="space-y-1">
-                    <p class="text-xl sm:text-3xl font-bold text-slate-800 leading-tight">
-                        <span x-show="!isDragging">Suelta tu archivo aquí</span>
-                        <span x-show="isDragging" class="text-blue-600 font-extrabold">¡Suelta tu audio aquí!</span>
+                    <p class="text-2xl font-bold text-slate-800 leading-tight">
+                        <span x-show="!isDragging">Arrastra aquí tu archivo</span>
+                        <span x-show="isDragging" class="text-blue-600 font-extrabold">¡Sueltalo!</span>
                     </p>
                     <p class="text-sm sm:text-base text-slate-500" x-show="!isDragging">
                         o <button type="button" @click.stop="triggerBrowse()"
