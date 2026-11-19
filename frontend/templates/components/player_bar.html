@@ -7,7 +7,7 @@
             <!-- Botón Play / Pause Principal -->
             <button type="button" @click="togglePlay()" :disabled="isLoading"
                 :class="isLoading ? 'opacity-60 cursor-wait bg-slate-300' : 'bg-blue-600 hover:bg-blue-700 active:scale-95 cursor-pointer shadow-md shadow-blue-500/25'"
-                class="w-12 h-12 sm:w-13 sm:h-13 rounded-full text-white flex items-center justify-center transition-all shrink-0"
+                class="w-14 h-14 rounded-full text-white flex items-center justify-center transition-all shrink-0"
                 :title="isLoading ? 'Cargando pistas de audio...' : (isPlaying ? 'Pausar ensayo (Espacio)' : 'Reproducir ensayo (Espacio)')">
                 <svg x-show="isLoading" x-cloak class="w-5 h-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -23,7 +23,7 @@
 
             <!-- Botón Reiniciar -->
             <button type="button" @click="restart()"
-                class="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition cursor-pointer"
+                class="w-10 h-10 rounded-xl bg-slate-200 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition cursor-pointer"
                 title="Volver al inicio (00:00)">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -52,8 +52,8 @@
     <div class="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 shrink-0">
         <!-- Control de Volumen Máster -->
         <div
-            class="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-2.5 sm:px-3 py-1.5 rounded-xl">
-            <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5 text-slate-500 shrink-0" fill="none" stroke="currentColor"
+            class="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-2.5 sm:px-3 py-1.5 rounded-lg">
+            <svg class="w-6 h-6 text-slate-500 shrink-0" fill="none" stroke="currentColor"
                 stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round"
                     d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H4v4h4l4 4V6z" />

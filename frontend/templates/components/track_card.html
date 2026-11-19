@@ -4,23 +4,23 @@
 
 {# Derivar clases de tono según el accent para el contenedor del icono y el borde lateral #}
 {% if 'blue' in accent_text %}
-  {% set icon_bg = 'bg-blue-100/70 border-blue-200/80' %}
+  {% set icon_bg = 'bg-blue-300/70 border-blue-200/80' %}
   {% set left_bar = 'bg-blue-500' %}
 {% elif 'teal' in accent_text %}
-  {% set icon_bg = 'bg-teal-100/70 border-teal-200/80' %}
+  {% set icon_bg = 'bg-teal-200/70 border-teal-200/80' %}
   {% set left_bar = 'bg-teal-500' %}
 {% elif 'purple' in accent_text %}
-  {% set icon_bg = 'bg-purple-100/70 border-purple-200/80' %}
+  {% set icon_bg = 'bg-indigo-300/70 border-purple-200/80' %}
   {% set left_bar = 'bg-purple-500' %}
 {% elif 'rose' in accent_text %}
-  {% set icon_bg = 'bg-rose-100/70 border-rose-200/80' %}
+  {% set icon_bg = 'bg-rose-300/70 border-rose-200/80' %}
   {% set left_bar = 'bg-rose-500' %}
 {% else %}
   {% set icon_bg = 'bg-slate-100 border-slate-200/80' %}
   {% set left_bar = 'bg-slate-400' %}
 {% endif %}
 
-<div class="relative bg-white hover:bg-slate-50/30 border border-slate-200/80 hover:border-slate-300/80 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 lg:py-3 lg:px-5 xl:px-6 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 lg:gap-6 overflow-hidden shadow-xs hover:shadow-md transition-all duration-200 min-h-[75px] sm:min-h-[95px] lg:min-h-[110px]"
+<div class="relative bg-gray-100 hover:bg-gray-200/50 border border-slate-300/80 hover:border-slate-300/80 rounded-xl p-3 sm:p-3.5 lg:py-3 lg:px-5 xl:px-6 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 lg:gap-6 overflow-hidden shadow-xs hover:shadow-md transition-all duration-200 sm:min-h-[100px] md:min-h-[120px] lg:min-h-[140px] "
     :class="{'opacity-40 grayscale-[25%]': isTrackDimmed('{{ key }}')}">
 
     <!-- Acento lateral de color de stem: barra fina izquierda -->
@@ -31,7 +31,7 @@
         class="pl-2 w-full md:w-44 lg:w-48 xl:w-56 shrink-0 flex items-center justify-between md:justify-start gap-2.5 sm:gap-3">
         <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <!-- Contenedor del icono con tono del stem -->
-            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl {{ icon_bg }} border flex items-center justify-center p-2 shrink-0 shadow-2xs">
+            <div class="w-16 h-16 rounded-full {{ icon_bg }} border flex items-center justify-center p-2 shrink-0 shadow-2xs">
                 <img src="{{ icon_path }}" alt="{{ name }}" class="w-full h-full object-contain opacity-80">
             </div>
             <div class="min-w-0 space-y-0.5">
@@ -82,12 +82,13 @@
     <div
         class="flex items-center justify-between md:justify-end gap-2.5 sm:gap-3.5 lg:gap-4 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
         <!-- Grupo de botones Silenciar / Solo (Desktop >= md) -->
-        <div class="hidden md:inline-flex rounded-xl bg-slate-100 p-0.5 text-xs font-bold text-slate-600 border border-slate-200/60">
+        <div class="hidden md:inline-flex rounded-xl bg-slate-100 p-0.5 text-sm font-bold text-slate-600 border border-blue-500/70">
             <button type="button" @click="toggleMute('{{ key }}')"
                 class="px-2.5 sm:px-3 py-1 rounded-lg transition-all duration-150 cursor-pointer"
                 :class="tracks.{{ key }}.muted ? 'bg-rose-500 text-white font-black shadow-xs' : 'text-slate-600 hover:bg-white hover:text-slate-900'">
                 Silenciar
             </button>
+            <div class="border-r border-slate-400"></div>
             <button type="button" @click="toggleSolo('{{ key }}')"
                 class="px-2.5 sm:px-3 py-1 rounded-lg transition-all duration-150 cursor-pointer"
                 :class="tracks.{{ key }}.solo ? 'bg-indigo-600 text-white font-black shadow-xs' : 'text-slate-600 hover:bg-white hover:text-slate-900'">
