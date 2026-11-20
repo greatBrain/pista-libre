@@ -6,48 +6,49 @@
 {% block content %}
 <script id="song-config-data" type="application/json">{{ song_info | tojson }}</script>
 <div x-data="practiceRoom()"
-    class="w-full max-w-7xl xl:max-w-8xl 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 lg:py-8 space-y-4 sm:space-y-5">
+    class="w-full max-w-7xl xl:max-w-8xl 2xl:max-w-[1800px] min-h-[calc(100vh-3.5rem)] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-7 lg:py-8 xl:py-9 flex flex-col justify-between gap-5 sm:gap-6 lg:gap-7">
 
     <!-- Encabezado de la Sesión con Carátula, Metadatos y Acciones -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-5 shrink-0">
         <!-- Identidad de la Canción: Portada + Título + Artista + Metadatos -->
-        <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+        <div class="flex items-center gap-3.5 sm:gap-4 lg:gap-5 min-w-0">
             {% if song_info.cover_image_url %}
             <div
-                class="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-xl overflow-hidden border border-slate-200/80 shadow-md shrink-0 bg-slate-900">
+                class="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 rounded-xl overflow-hidden border border-slate-200/80 shadow-md shrink-0 bg-slate-900">
                 <img src="{{ song_info.cover_image_url }}" alt="{{ song_info.title }}"
                     class="w-full h-full object-cover rounded-xl block"
                     onerror="this.parentElement.style.display='none'">
             </div>
             {% endif %}
-            <div class="min-w-0 space-y-2">
-                <div class="flex flex-wrap items-center gap-2">
+            <div class="min-w-0 space-y-2 sm:space-y-2.5">
+                <div class="flex flex-wrap items-center gap-2.5">
                     <h1
-                        class="text-3xl lg:text-4xl font-black text-slate-800 tracking-tight leading-snug">
+                        class="text-2xl sm:text-3xl lg:text-4xl xl:text-[2.75rem] font-bold text-slate-900 tracking-tight leading-tight">
                         {{ song_info.title }}
                     </h1>
                 </div>
-                <p class="text-xs sm:text-sm text-slate-500 flex flex-wrap items-center gap-1.5 sm:gap-2">
-                    <span class="font-bold text-slate-800 text-sm sm:text-base">{{ song_info.artist }}</span>
-                    <span class="text-slate-300">•</span>
-                    <span class="font-mono text-slate-500 font-semibold text-xs sm:text-sm" x-text="totalTimeDisplay">{{ song_info.duration }}</span>
+                <div class="text-xs sm:text-sm text-slate-500 flex flex-wrap items-center gap-2 sm:gap-2.5">
+                    <span class="font-semibold text-slate-700 text-sm sm:text-base">{{ song_info.artist }}</span>
+                    <span class="text-slate-300 select-none">•</span>
+                    <span class="font-mono text-slate-600 font-medium text-xs sm:text-sm tabular-nums"
+                        x-text="totalTimeDisplay">{{ song_info.duration }}</span>
                     {% if song_info.bpm %}
-                    <span class="text-slate-300">•</span>
+                    <span class="text-slate-300 select-none">•</span>
                     <span
-                        class="px-2 py-0.5 rounded-lg bg-blue-100/80 text-blue-700 border border-blue-200/70 font-mono text-xs font-bold">{{
+                        class="px-2.5 py-0.5 rounded-md bg-slate-200/80 text-slate-700 border border-slate-300/80 font-mono text-xs font-semibold tabular-nums">{{
                         song_info.bpm }} BPM</span>
-                    {% endif %}                    
-                </p>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
         <!-- Botones de Acción: Descargar Stems y Cambiar Canción -->
-        <div class="flex items-center gap-2 sm:gap-2.5 shrink-0 self-start sm:self-auto">
+        <div class="flex items-center gap-3 shrink-0 self-start sm:self-auto">
             <!-- Descargar Stems (ZIP) -->
             <a href="/download/stems-completos.zip{% if demo_id %}?demo={{ demo_id }}{% elif song_info.id not in ['custom'] %}?session={{ song_info.id }}{% endif %}" download
-                class="px-4 py-2 sm:py-2.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow-md transition-all flex items-center gap-2 active:scale-95"
+                class="px-4 sm:px-5 py-2.5 lg:py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold border border-blue-700/80 shadow-xs transition-all flex items-center gap-2 active:scale-[0.98]"
                 title="Descargar paquete de stems en ZIP">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"
+                <svg class="w-4 h-4 text-blue-100 shrink-0" fill="none" stroke="currentColor" stroke-width="2"
                     viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -57,9 +58,9 @@
 
             <!-- Cambiar Canción / Volver al Inicio -->
             <a href="/"
-                class="px-4 py-2 sm:py-2.5 rounded-full border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-xs sm:text-sm font-bold text-slate-700 shadow-2xs transition-all flex items-center gap-1.5 active:scale-95"
+                class="px-4 sm:px-5 py-2.5 lg:py-3 rounded-xl border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-900 shadow-2xs transition-all flex items-center gap-2 active:scale-[0.98]"
                 title="Volver a la selección de pistas">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"
+                <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2"
                     viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
@@ -71,13 +72,15 @@
 
     <!-- Consola de Ensayo con Transport Bar y Pistas Multitrack -->
     <div
-        class="bg-gray-50 rounded-xl border border-slate-200/80 shadow-card p-4 sm:p-5 lg:p-6 space-y-3.5 sm:space-y-4">
+        class="bg-white/70 rounded-xl border border-blue-600/40 shadow-card p-5 sm:p-6 lg:p-8 xl:p-9 flex-1 flex flex-col justify-between gap-5 sm:gap-6 lg:gap-7">
 
         <!-- 1. Barra de Controles de Reproducción Master (Ubicada arriba de las pistas) -->
-        {% include "components/player_bar.html" %}
+        <div class="shrink-0">
+            {% include "components/player_bar.html" %}
+        </div>
 
         <!-- 2. Pistas de Audio con Cabezal Playhead Sincronizado -->
-        <div class="relative space-y-2 sm:space-y-2.5 lg:space-y-2.5 xl:space-y-3">
+        <div class="relative flex-1 flex flex-col justify-between gap-3.5 sm:gap-4 lg:gap-5 xl:gap-6 py-1">
             <!-- Cabezal Playhead Line sincronizado dinámicamente -->
             <div class="hidden sm:block absolute top-0 bottom-0 w-0.5 bg-slate-900 z-10 pointer-events-none transition-all duration-100 ease-linear"
                 :style="'left: calc(' + (22 + (playbackProgress * 0.54)) + '%)'">
@@ -85,20 +88,28 @@
                 </div>
             </div>
             <!-- 1. VOZ (Azul Cobalto) -->
-            {{ render_track("vocals", "Voces", "", "/assets/img/icons/voice-black.svg",
-            "text-blue-500", 80) }}
+            <div class="flex-1 flex flex-col justify-center">
+                {{ render_track("vocals", "Voces", "", "/assets/img/icons/voice-black.svg",
+                "text-blue-500", 80) }}
+            </div>
 
             <!-- 2. BATERÍA (Verde Teal / Menta) -->
-            {{ render_track("drums", "Batería", "", "/assets/img/icons/drums-black.svg",
-            "text-teal-500", 75) }}
+            <div class="flex-1 flex flex-col justify-center">
+                {{ render_track("drums", "Batería", "", "/assets/img/icons/drums-black.svg",
+                "text-teal-500", 75) }}
+            </div>
 
             <!-- 3. BAJO (Púrpura Eléctrico - Sustituto de amarillo/ámbar) -->
-            {{ render_track("bass", "Bajo", "", "/assets/img/icons/bass-black.svg",
-            "text-purple-500", 70) }}
+            <div class="flex-1 flex flex-col justify-center">
+                {{ render_track("bass", "Bajo", "", "/assets/img/icons/bass-black.svg",
+                "text-purple-500", 70) }}
+            </div>
 
             <!-- 4. OTROS (Rosa Baya / Teclados / Guitarra) -->
-            {{ render_track("other", "Guitarras,teclados,otros", "",
-            "/assets/img/icons/guitar-black.svg", "text-rose-500", 65) }}
+            <div class="flex-1 flex flex-col justify-center">
+                {{ render_track("other", "Guitarras,teclados,otros", "",
+                "/assets/img/icons/guitar-black.svg", "text-rose-500", 65) }}
+            </div>
         </div>
     </div>
 </div>

@@ -32,7 +32,7 @@ body {
 input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
-    background: #e2e8f0;
+    background: #757575;
     border-radius: 9999px;
     height: 5px;
     outline: none;
@@ -62,7 +62,7 @@ input[type="range"]::-moz-range-thumb {
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #0f172a;
+    background: #757575;
     cursor: pointer;
     border: 2px solid #ffffff;
     box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);

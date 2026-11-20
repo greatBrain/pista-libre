@@ -1,19 +1,19 @@
 <!-- Barra de Controles de Reproducción / Master Transport Console -->
 <div
-    class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-6 border-b border-slate-300/70">
+    class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-6 bg-[#111A2B] border border-white/10 p-3 rounded-xl">
     <!-- 1. Play / Pause + Reiniciar + Reloj de Tiempo -->
     <div class="flex items-center justify-between sm:justify-start gap-2.5 sm:gap-3.5">
         <div class="flex items-center gap-2 sm:gap-2.5">
             <!-- Botón Play / Pause Principal -->
             <button type="button" @click="togglePlay()" :disabled="isLoading"
-                :class="isLoading ? 'opacity-60 cursor-wait bg-slate-300' : 'bg-blue-600 hover:bg-blue-700 active:scale-95 cursor-pointer shadow-md shadow-blue-500/25'"
-                class="w-14 h-14 rounded-full text-white flex items-center justify-center transition-all shrink-0"
+                :class="isLoading ? 'opacity-60 cursor-wait bg-slate-700 text-slate-300' : 'bg-blue-500 hover:bg-blue-400 active:scale-95 cursor-pointer shadow-sm shadow-blue-500/20 text-slate-950'"
+                class="w-14 h-14 rounded-full flex items-center justify-center transition-all shrink-0"
                 :title="isLoading ? 'Cargando pistas de audio...' : (isPlaying ? 'Pausar ensayo (Espacio)' : 'Reproducir ensayo (Espacio)')">
                 <svg x-show="isLoading" x-cloak class="w-5 h-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                 </svg>
-                <svg x-show="!isLoading && !isPlaying" class="w-5 h-5 fill-current ml-0.5" viewBox="0 0 24 24">
+                <svg x-show="!isLoading && !isPlaying" class="w-8 h-8 fill-current ml-0.5" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z" />
                 </svg>
                 <svg x-show="!isLoading && isPlaying" x-cloak class="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -23,7 +23,7 @@
 
             <!-- Botón Reiniciar -->
             <button type="button" @click="restart()"
-                class="w-10 h-10 rounded-xl bg-slate-200 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition cursor-pointer"
+                class="w-10 h-10 rounded-xl bg-[#182438] hover:bg-[#20304A] border border-white/10 text-slate-200 hover:text-sky-300 flex items-center justify-center transition cursor-pointer"
                 title="Volver al inicio (00:00)">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -32,10 +32,10 @@
             </button>
         </div>
 
-        <!-- Reloj Digital de Tiempo (Consola de audio — contraste oscuro con acento blue sutil) -->
+        <!-- Reloj Digital de Tiempo (Consola de audio — contraste oscuro con acento azul sobrio) -->
         <div
-            class="flex items-baseline gap-1.5 font-mono bg-slate-900 text-white px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-xl border border-slate-800 shadow-inner">
-            <span class="text-sm sm:text-base lg:text-lg font-bold text-blue-300 tracking-wider"
+            class="flex items-baseline gap-1.5 font-mono bg-[#0B121E] text-slate-100 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-xl border border-white/10">
+            <span class="text-sm sm:text-base lg:text-lg font-bold text-sky-400 tracking-wider"
                 x-text="currentTimeDisplay">00:00</span>
             <span class="text-xs text-slate-600 font-bold">/</span>
             <span class="text-xs sm:text-sm text-slate-400 font-medium" x-text="totalTimeDisplay">{{ song_info.duration }}</span>
@@ -43,24 +43,24 @@
     </div>
 
     <!-- 2. Línea de Tiempo Scrubber Central -->
-    <div class="flex-1 max-w-2xl mx-0 sm:mx-4 flex items-center gap-2">
+    <div class="flex-1 max-w-6xl mx-0 sm:mx-4 flex items-center gap-2">
         <input type="range" min="0" max="100" step="0.2" x-model="playbackProgress" @input="seekTo($event.target.value)"
-            class="w-full cursor-pointer accent-blue-600 h-2 rounded-lg" title="Avanzar / retroceder en la canción">
+            class="w-full cursor-pointer accent-sky-400 h-2 rounded-lg bg-[#1E2D45]" title="Avanzar / retroceder en la canción">
     </div>
 
     <!-- 3. Volumen Máster y Reset de Canales -->
     <div class="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 shrink-0">
         <!-- Control de Volumen Máster -->
         <div
-            class="flex items-center gap-2 bg-slate-50 border border-blue-400/80 px-2.5 sm:px-3 py-1.5 rounded-lg">
-            <svg class="w-10 h-10 text-gray-500 shrink-0" fill="none" stroke="currentColor"
+            class="flex items-center gap-2 bg-[#0B121E] border border-white/10 px-2.5 sm:px-3 py-1.5 rounded-lg">
+            <svg class="w-10 h-10 text-slate-400 shrink-0" fill="none" stroke="currentColor"
                 stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round"
                     d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H4v4h4l4 4V6z" />
             </svg>
             <input type="range" min="0" max="100" x-model="masterVolume" @input="applyMixState()"
-                class="w-24 accent-slate-800 cursor-pointer h-2">
-            <span class="text-md font-mono font-bold text-slate-700 w-9 text-right"
+                class="w-24 accent-sky-400 cursor-pointer h-2 bg-[#1E2D45] rounded-lg">
+            <span class="text-md font-mono font-bold text-slate-200 w-9 text-right"
                 x-text="masterVolume + '%'">85%</span>
         </div>
     </div>

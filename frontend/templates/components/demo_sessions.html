@@ -6,7 +6,7 @@
         <button type="button" @click="open = !open"
             class="w-full flex items-center justify-between cursor-pointer group text-left focus:outline-none pb-4">
             <h2
-                class="text-sm sm:text-base font-black text-slate-100 group-hover:text-blue-400 transition-colors tracking-tight flex items-center gap-2 uppercase">
+                class="text-sm sm:text-base font-black text-slate-100 group-hover:text-blue-300 transition-colors tracking-tight flex items-center gap-2 uppercase">
                 <span>Salas creadas</span>
                 <img src="/assets/img/icons/dropdown-arrow.svg" alt=""
                     class="w-4 h-4 transition-transform duration-200 filter invert opacity-60"
@@ -14,55 +14,51 @@
             </h2>
         </button>
 
-        <div x-show="open" x-transition.duration.200ms class="space-y-2">
+        <div x-show="open" x-transition.duration.200ms class="space-y-2.5">
             {% if user_sessions %}
             {% for u_session in user_sessions %}
             <a href="/practice?session={{ u_session.session_id }}" title="Abrir sala: {{ u_session.original_filename }}"
-                class="group relative flex items-stretch rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700/80 hover:border-indigo-500/60 shadow-sm hover:shadow-lg hover:shadow-indigo-900/20 transition-all duration-200 overflow-hidden min-h-[112px] lg:min-h-[115px] w-full shrink-0 hover:-translate-y-0.5">
+                class="group relative flex items-stretch rounded-2xl bg-[#192847] hover:bg-[#20335A] border border-blue-400/40 hover:border-blue-300/65 shadow-[0_1px_0_rgba(147,197,253,0.14)] hover:shadow-[0_4px_14px_rgba(96,165,250,0.12)] transition-all duration-200 overflow-hidden min-h-[112px] lg:min-h-[115px] w-full shrink-0 hover:-translate-y-0.5">
 
-                <!-- Portada de sesión propia: fondo degradado oscuro con ondas de audio sutiles -->
+                <!-- Portada de sesión propia: fondo sólido azul-índigo con ondas de audio sutiles -->
                 <div
-                    class="relative w-20 sm:w-24 shrink-0 overflow-hidden bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900">
+                    class="relative w-20 sm:w-24 shrink-0 overflow-hidden bg-[#1E3561] border-r border-blue-400/35">
                     <!-- Patrón de ondas decorativo -->
                     <div class="absolute inset-0 opacity-20">
                         <svg viewBox="0 0 80 96" class="w-full h-full" preserveAspectRatio="xMidYMid slice">
                             <path d="M0 48 Q10 32 20 48 Q30 64 40 48 Q50 32 60 48 Q70 64 80 48" fill="none"
-                                stroke="white" stroke-width="1.5" />
+                                stroke="currentColor" stroke-width="1.5" class="text-blue-200" />
                             <path d="M0 36 Q10 24 20 36 Q30 48 40 36 Q50 24 60 36 Q70 48 80 36" fill="none"
-                                stroke="white" stroke-width="1" />
+                                stroke="currentColor" stroke-width="1" class="text-blue-200" />
                             <path d="M0 60 Q10 48 20 60 Q30 72 40 60 Q50 48 60 60 Q70 72 80 60" fill="none"
-                                stroke="white" stroke-width="1" />
+                                stroke="currentColor" stroke-width="1" class="text-blue-200" />
                         </svg>
                     </div>
                     <!-- Icono centrado -->
                     <div class="relative w-full h-full flex flex-col items-center justify-center gap-1.5">
                         <div
-                            class="w-10 h-10 rounded-full bg-indigo-600/60 border border-indigo-400/30 flex items-center justify-center group-hover:scale-105 group-hover:bg-indigo-500/70 transition-all duration-300">
-                            <svg class="w-5 h-5 text-indigo-200" fill="none" stroke="currentColor" stroke-width="1.8"
+                            class="w-10 h-10 rounded-full bg-blue-500/25 border border-blue-300/45 flex items-center justify-center group-hover:scale-105 group-hover:bg-blue-500/35 group-hover:border-blue-300/65 transition-all duration-300">
+                            <svg class="w-5 h-5 text-blue-200" fill="none" stroke="currentColor" stroke-width="1.8"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                             </svg>
                         </div>
-                        <span class="text-[9px] font-bold text-indigo-300/80 tracking-widest uppercase">4 pistas</span>
+                        <span class="text-[9px] font-bold text-blue-200/90 tracking-widest uppercase">4 pistas</span>
                     </div>
                 </div>
 
                 <!-- Contenido -->
-                <div class="p-2.5 sm:p-3 flex-1 min-w-0 flex flex-col justify-between">
+                <div class="p-2.5 sm:p-3 flex-1 min-w-0 flex flex-col justify-between bg-[#192847] group-hover:bg-[#20335A] transition-colors">
                     <div class="min-w-0">
                         <h3
-                            class="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors leading-snug truncate">
+                            class="text-lg font-bold text-slate-50 group-hover:text-blue-200 transition-colors leading-snug truncate">
                             {{ u_session.original_filename.rsplit('.', 1)[0] | replace('_', ' ') | title }}
                         </h3>
                     </div>
-                    <div class="flex items-center justify-between gap-2 mt-1.5">
-                        <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-400">
-                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 inline-block"></span>
-                            Listo para ensayar
-                        </span>
+                    <div class="flex items-center justify-end mt-1.5">
                         <div
-                            class="w-7 h-7 rounded-full bg-slate-700 group-hover:bg-indigo-600 border border-slate-600 group-hover:border-indigo-500 text-slate-400 group-hover:text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-all duration-200">
+                            class="w-7 h-7 rounded-full bg-[#253B66] group-hover:bg-blue-500/35 border border-blue-300/35 group-hover:border-blue-300/60 text-blue-200 group-hover:text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-200">
                             <svg class="w-3 h-3 fill-current ml-0.5" viewBox="0 0 24 24">
                                 <path d="M8 5v14l11-7z" />
                             </svg>
@@ -73,16 +69,16 @@
             {% endfor %}
 
             {% else %}
-            <div class="p-4 rounded-xl bg-slate-800/60 border border-dashed border-slate-700/80 text-center">
-                <div class="w-8 h-8 rounded-lg bg-slate-700/60 flex items-center justify-center mx-auto mb-2">
-                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="1.8"
+            <div class="p-4 rounded-xl bg-[#192847]/85 border border-dashed border-blue-400/35 shadow-[0_1px_0_rgba(147,197,253,0.12)] text-center">
+                <div class="w-8 h-8 rounded-lg bg-[#20335A] border border-blue-400/25 flex items-center justify-center mx-auto mb-2">
+                    <svg class="w-4 h-4 text-blue-300/80" fill="none" stroke="currentColor" stroke-width="1.8"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                     </svg>
                 </div>
-                <p class="text-xs text-slate-300 font-medium">No tienes salas personalizadas aún.</p>
-                <p class="text-[11px] text-slate-500 mt-0.5">Sube una canción para verla aquí</p>
+                <p class="text-xs text-slate-200 font-medium">No tienes salas personalizadas aún.</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Sube una canción para verla aquí</p>
             </div>
             {% endif %}
         </div>
