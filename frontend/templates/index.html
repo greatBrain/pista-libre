@@ -155,11 +155,10 @@
     <aside
         class="w-full lg:w-96 xl:w-[400px] 2xl:w-[440px] lg:shrink-0 bg-slate-900 border-b lg:border-b-0 lg:border-r border-slate-700/50 p-3.5 sm:p-4 lg:p-5 xl:p-6 flex flex-col justify-start lg:min-h-[calc(100vh-4rem)] lg:sticky lg:top-0 lg:self-start overflow-hidden lg:overflow-y-auto">
         {% include "components/demo_sessions.html" %}
-    </aside>
+    </aside>        
 
     <!-- 2. CONTENEDOR PRINCIPAL: TOTALMENTE CENTRADO (Dropzone, Pistas y Botón de Acción) -->
-    <div
-        class="flex-1 min-w-0 px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6 xl:px-12 xl:py-8 flex flex-col items-center justify-center">
+    <div class="flex-1 min-w-0 px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6 xl:px-12 xl:py-8 flex flex-col items-center justify-center">                
         <div
             class="w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto space-y-4 sm:space-y-4 lg:space-y-4 xl:space-y-5">
 
@@ -224,6 +223,9 @@
         </div>
     </div>
 
+    <div class="max-h-[90px] px-4 py-4 mb-6 flex flex-row items-start">       
+        {% include "components/mode-switcher.html" %}       
+    </div>
     <!-- Componente 3: Hub / Modal de Decisión Post-Separación -->
     {% include "components/modal_decision.html" %}
 </div>

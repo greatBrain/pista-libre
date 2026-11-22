@@ -1,5 +1,5 @@
 <!-- Navbar Superior de Opciones (Desktop: barra horizontal fija | Mobile: header + aside desplegable) -->
-<header class="sticky top-0 z-30 w-full bg-[#0B121E] border-b border-white/10">
+<header class="sticky top-0 z-30 w-full bg-[#0B121E] border-b border-white/10 overflow-hidden">
     <div
         class="w-full max-w-[2160px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-14 h-16 flex items-center justify-between relative">
 
@@ -60,7 +60,6 @@
             </button>
         </div>
     </div>
-
     <!-- Menú Desplegable para Móviles (< lg) -->
     <div x-show="mobileMenuOpen" x-cloak @click.away="mobileMenuOpen = false"
         x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1.5"
@@ -76,7 +75,6 @@
             </svg>
             <span>Inicio</span>
         </a>
-
         <a href="/practice"
             class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm {% if active_tab == 'practice' %}font-semibold text-amber-300 bg-amber-400/10 border border-amber-400/25{% else %}font-medium text-slate-300 hover:text-white hover:bg-white/[0.05] border border-transparent{% endif %}">
             <svg class="w-4 h-4 {% if active_tab == 'practice' %}text-amber-400{% else %}text-slate-400{% endif %}"
@@ -85,14 +83,6 @@
                     d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <span>Sala de ensayo</span>
-        </a>
-
-        <a href="/#recientes" @click="mobileMenuOpen = false"
-            class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/[0.05] border border-transparent">
-            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>Recientes</span>
         </a>
     </div>
 </header>

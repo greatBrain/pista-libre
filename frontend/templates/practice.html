@@ -1,10 +1,13 @@
 {% extends "base.html" %}
 {% from "components/track_card.html" import render_track %}
 
-{% block title %}Pista Libre — Sala de Ensayo • {{ song_info.title }}{% endblock %}
+{% block title %}Pista Libre {{ song_info.title }}{% endblock %}
 
 {% block content %}
 <script id="song-config-data" type="application/json">{{ song_info | tojson }}</script>
+<div class="max-h-[70px] px-4 py-2 flex flex-row justify-end items-end">       
+    {% include "components/mode-switcher.html" %}       
+</div>
 <div x-data="practiceRoom()"
     class="w-full max-w-7xl xl:max-w-8xl 2xl:max-w-[1800px] min-h-[calc(100vh-3.5rem)] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-7 lg:py-8 xl:py-9 flex flex-col justify-between gap-5 sm:gap-6 lg:gap-7">
 
