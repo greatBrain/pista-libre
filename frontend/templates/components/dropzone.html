@@ -4,9 +4,9 @@
     <div @dragover.prevent="handleDragOver($event)" @dragenter.prevent="handleDragOver($event)"
         @dragleave.prevent="handleDragLeave($event)" @drop.prevent="handleDrop($event)"
         @click="if (!selectedFile) triggerBrowse()" :class="{
-            'border-blue-500 bg-blue-100/75 ring-4 ring-blue-200/60 scale-[1.004]': isDragging,
-            'border-blue-300/90 bg-blue-50/70 shadow-xs': selectedFile && !isDragging,
-            'border-slate-300 hover:border-blue-500 bg-[#E6ECF5] hover:bg-blue-50/75 cursor-pointer shadow-2xs hover:shadow-sm': !selectedFile && !isDragging
+            'border-blue-500 bg-blue-100/75 ring-4 ring-blue-200/60 scale-[1.004] dark:bg-blue-500/15 dark:ring-blue-500/30': isDragging,
+            'border-blue-300/90 bg-blue-50/70 shadow-xs dark:border-blue-500/50 dark:bg-blue-500/10': selectedFile && !isDragging,
+            'border-slate-300 hover:border-blue-500 bg-[#E6ECF5] hover:bg-blue-50/75 cursor-pointer shadow-2xs hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800/80': !selectedFile && !isDragging
         }"
         class="w-full border-2 border-dashed rounded-2xl py-8 sm:py-9 lg:py-10 px-6 sm:px-8 text-center transition-all duration-200 group flex flex-col items-center justify-center gap-4 min-h-[240px] sm:min-h-[260px] lg:min-h-[280px]">
 
@@ -21,18 +21,18 @@
             <div class="flex flex-col items-center justify-center gap-3.5 sm:gap-4 w-full max-w-2xl">
                 <!-- Icono de Archivo de Música con contenedor moderno -->
                 <div
-                    class="w-18 h-18 sm:w-20 sm:h-20 rounded-xl bg-white border border-slate-300/80 group-hover:border-blue-400/70 flex items-center justify-center p-3.5 sm:p-4 transition-transform duration-200 group-hover:scale-105 shadow-2xs">
+                    class="w-18 h-18 sm:w-20 sm:h-20 rounded-xl bg-white dark:bg-slate-800 border border-slate-300/80 dark:border-slate-600 group-hover:border-blue-400/70 flex items-center justify-center p-3.5 sm:p-4 transition-transform duration-200 group-hover:scale-105 shadow-2xs">
                     <img src="/assets/img/icons/music-file.svg" alt="Archivo de música"
-                        class="w-full h-full object-contain">
+                        class="w-full h-full object-contain dark:invert">
                 </div>
 
                 <!-- Textos de Acción -->
                 <div class="space-y-1.5">
-                    <p class="text-2xl sm:text-3xl font-bold text-slate-900 leading-tight">
+                    <p class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 leading-tight">
                         <span x-show="!isDragging">Arrastra aquí tu archivo</span>
                         <span x-show="isDragging" class="text-blue-600 font-extrabold">¡Suéltalo!</span>
                     </p>
-                    <p class="text-sm sm:text-base text-slate-600" x-show="!isDragging">
+                    <p class="text-sm sm:text-base text-slate-600 dark:text-slate-400" x-show="!isDragging">
                         o <button type="button" @click.stop="triggerBrowse()"
                             class="text-blue-600 underline font-bold hover:text-blue-700 cursor-pointer inline focus:outline-none underline-offset-4">Explora
                             en tu equipo</button>
@@ -45,14 +45,14 @@
                 <!-- Formatos Permitidos y Límite de Peso -->
                 <div class="flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm pt-1">
                     <span
-                        class="px-2.5 py-1 rounded-md bg-white font-mono font-bold text-slate-700 border border-slate-300/80 shadow-2xs">MP3</span>
+                        class="px-2.5 py-1 rounded-md bg-white font-mono font-bold text-slate-700 border border-slate-300/80 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 shadow-2xs">MP3</span>
                     <span
-                        class="px-2.5 py-1 rounded-md bg-white font-mono font-bold text-slate-700 border border-slate-300/80 shadow-2xs">WAV</span>
+                        class="px-2.5 py-1 rounded-md bg-white font-mono font-bold text-slate-700 border border-slate-300/80 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 shadow-2xs">WAV</span>
                     <span
-                        class="px-2.5 py-1 rounded-md bg-white font-mono font-bold text-slate-700 border border-slate-300/80 shadow-2xs">FLAC</span>
+                        class="px-2.5 py-1 rounded-md bg-white font-mono font-bold text-slate-700 border border-slate-300/80 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 shadow-2xs">FLAC</span>
                     <span
-                        class="px-2.5 py-1 rounded-md bg-white font-mono font-bold text-slate-700 border border-slate-300/80 shadow-2xs">AAC</span>
-                    <span class="text-slate-600 text-xs sm:text-sm pl-1 font-medium">• Máximo 10MB</span>
+                        class="px-2.5 py-1 rounded-md bg-white font-mono font-bold text-slate-700 border border-slate-300/80 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 shadow-2xs">AAC</span>
+                    <span class="text-slate-600 dark:text-slate-400 text-xs sm:text-sm pl-1 font-medium">• Máximo 10MB</span>
                 </div>
             </div>
         </template>
@@ -64,12 +64,12 @@
             <div class="flex flex-col items-center justify-center gap-4 sm:gap-5 w-full max-w-2xl">
                 <!-- Icono de Música con Check Verde Superior de Validación -->
                 <div
-                    class="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl bg-white border border-blue-300 flex items-center justify-center p-3.5 sm:p-4 shadow-2xs">
+                    class="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl bg-white dark:bg-slate-800 border border-blue-300 dark:border-blue-500/60 flex items-center justify-center p-3.5 sm:p-4 shadow-2xs">
                     <img src="/assets/img/icons/music-file.svg" alt="Archivo seleccionado"
-                        class="w-full h-full object-contain">
+                        class="w-full h-full object-contain dark:invert">
 
                     <!-- Check discreto en el top del icono (archivo cargado y validado) -->
-                    <div class="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center ring-2 ring-white shadow-2xs"
+                    <div class="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center ring-2 ring-white dark:ring-slate-900 shadow-2xs"
                         title="Canción cargada y validada">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
@@ -79,16 +79,16 @@
 
                 <!-- Título del Archivo y Metadatos Homogéneos -->
                 <div class="space-y-1.5 max-w-full px-2 text-center">
-                    <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 leading-tight tracking-tight truncate max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto"
+                    <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100 leading-tight tracking-tight truncate max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto"
                         x-text="selectedFile ? selectedFile.name : ''"></p>
 
                     <!-- Formato y Tamaño en badges nítidos -->
                     <div class="flex items-center justify-center gap-2 text-xs sm:text-sm pt-0.5">
                         <span
-                            class="px-2.5 py-0.5 rounded-md bg-white font-mono font-bold text-slate-700 border border-slate-300/80 shadow-2xs"
+                            class="px-2.5 py-0.5 rounded-md bg-white font-mono font-bold text-slate-700 border border-slate-300/80 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 shadow-2xs"
                             x-text="selectedFile ? selectedFile.extension : ''"></span>
                         <span class="text-slate-400 text-xs sm:text-sm pl-0.5">•</span>
-                        <span class="font-mono text-slate-600 font-semibold text-xs sm:text-sm"
+                        <span class="font-mono text-slate-600 dark:text-slate-400 font-semibold text-xs sm:text-sm"
                             x-text="selectedFile ? selectedFile.sizeFormatted : ''"></span>
                     </div>
                 </div>
@@ -97,7 +97,7 @@
                 <div class="flex items-center justify-center gap-2.5 pt-1">
                     <!-- Cambiar Canción -->
                     <button type="button" @click.stop="triggerBrowse()"
-                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm transition cursor-pointer shadow-2xs"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 font-bold dark:border-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 text-xs sm:text-sm transition cursor-pointer shadow-2xs"
                         title="Seleccionar otra canción">
                         <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" stroke="currentColor"
                             stroke-width="2" viewBox="0 0 24 24">
@@ -109,7 +109,7 @@
 
                     <!-- Quitar Archivo -->
                     <button type="button" @click.stop="removeFile()"
-                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-slate-600 hover:text-rose-600 hover:bg-rose-50 font-semibold text-xs sm:text-sm transition cursor-pointer"
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-semibold text-xs sm:text-sm transition cursor-pointer"
                         title="Quitar este archivo">
                         <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" stroke="currentColor"
                             stroke-width="2" viewBox="0 0 24 24">
@@ -125,7 +125,7 @@
 
     <!-- Banner de Validación / Error en el Cliente -->
     <div x-show="errorMessage" x-cloak
-        class="w-full max-w-xl mx-auto rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 flex items-center justify-between gap-3 shadow-2xs text-rose-900 text-xs sm:text-sm">
+        class="w-full max-w-xl mx-auto rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 px-4 py-3 flex items-center justify-between gap-3 shadow-2xs text-rose-900 dark:text-rose-200 text-xs sm:text-sm">
         <div class="flex items-center gap-2.5">
             <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2"
                 viewBox="0 0 24 24">

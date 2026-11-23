@@ -165,10 +165,10 @@
             <!-- Encabezado de la Pantalla Principal (Limpio y directo, sin badges de landing page) -->
             <div class="text-center max-w-4xl mx-auto pt-1 sm:pt-2">
                 <h1
-                    class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-slate-800 tracking-tight leading-tight">
+                    class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-slate-800 dark:text-slate-100 tracking-tight leading-tight">
                     Divide canciones en <span class="text-blue-600">pistas</span>
                 </h1>
-                <p class="text-sm sm:text-base lg:text-lg text-slate-600 mt-1.5 max-w-2xl mx-auto">
+                <p class="text-sm sm:text-base lg:text-lg text-slate-600 dark:text-slate-400 mt-1.5 max-w-2xl mx-auto">
                     Sube una canción y el sistema generará cuatro pistas independientes para que ensayes a tu gusto.
                 </p>
             </div>
@@ -183,7 +183,7 @@
             <div class="pt-2 flex flex-col items-center justify-center gap-2.5">
                 <button type="button" @click="startSeparation()" :disabled="!selectedFile || isProcessing"
                     :class="!selectedFile || isProcessing
-                        ? 'opacity-40 cursor-not-allowed bg-slate-200 hover:bg-slate-200 text-slate-400 shadow-none'
+                        ? 'opacity-40 cursor-not-allowed bg-slate-200 hover:bg-slate-200 text-slate-400 shadow-none dark:bg-slate-800 dark:hover:bg-slate-800 dark:text-slate-500'
                         : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white shadow-md hover:shadow-lg hover:shadow-blue-500/25 cursor-pointer'"
                     class="w-full sm:w-auto sm:min-w-[280px] px-10 sm:px-14 py-3.5 sm:py-4 rounded-full font-bold text-sm sm:text-base transition-all duration-200 flex items-center justify-center gap-2.5">
                     <template x-if="!isProcessing">
@@ -209,11 +209,11 @@
                 </button>
                 <!-- Micro-feedback de Progreso de Separación -->
                 <div x-show="isProcessing" x-cloak class="w-full max-w-md space-y-2 text-center transition">
-                    <div class="flex items-center justify-between text-xs font-semibold text-slate-600">
+                    <div class="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
                         <span x-text="processingStep"></span>
                         <span x-text="processingProgress + '%'" class="tabular-nums font-mono text-blue-600"></span>
                     </div>
-                    <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/60 shadow-inner">
+                    <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/60 shadow-inner dark:bg-slate-800 dark:border-slate-700/60">
                         <div class="h-full bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full transition-all duration-500 ease-out"
                             :style="`width: ${processingProgress}%`"></div>
                     </div>

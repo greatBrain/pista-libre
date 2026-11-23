@@ -20,7 +20,7 @@
   {% set left_bar = 'bg-slate-600' %}
 {% endif %}
 
-<div class="relative bg-slate-50/95 hover:bg-white border border-slate-300/85 hover:border-blue-400/55 rounded-xl p-3.5 sm:p-4 lg:py-4 lg:px-5 xl:px-6 flex flex-col md:flex-row md:items-center justify-between gap-3.5 md:gap-5 lg:gap-6 overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition-all duration-150 sm:min-h-[100px] md:min-h-[124px] lg:min-h-[132px] xl:min-h-[138px]"
+<div class="relative bg-slate-50/95 hover:bg-white border border-slate-300/85 dark:bg-slate-800/60 dark:hover:bg-slate-800 dark:border-slate-700 hover:border-blue-400/55 rounded-xl p-3.5 sm:p-4 lg:py-4 lg:px-5 xl:px-6 flex flex-col md:flex-row md:items-center justify-between gap-3.5 md:gap-5 lg:gap-6 overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition-all duration-150 sm:min-h-[100px] md:min-h-[124px] lg:min-h-[132px] xl:min-h-[138px]"
     :class="{'opacity-45 grayscale-[20%]': isTrackDimmed('{{ key }}')}">
 
     <!-- Acento lateral de color de stem: barra fina integrada -->
@@ -35,21 +35,21 @@
                 <img src="{{ icon_path }}" alt="{{ name }}" class="w-full h-full object-contain brightness-0 invert opacity-95">
             </div>
             <div class="min-w-0 space-y-0.5">
-                <p class="text-sm sm:text-base lg:text-[17px] font-bold text-slate-900 leading-snug truncate">{{ name }}</p>
-                <p class="text-[11px] sm:text-xs text-slate-500 truncate font-medium">{{ subtitle }}</p>
+                <p class="text-sm sm:text-base lg:text-[17px] font-bold text-slate-900 dark:text-slate-100 leading-snug truncate">{{ name }}</p>
+                <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate font-medium">{{ subtitle }}</p>
             </div>
         </div>
 
         <!-- Grupo de botones Silenciar / Solo (Visible en móvil < md al lado del título) -->
-        <div class="md:hidden inline-flex items-center gap-1 rounded-xl bg-slate-200/70 p-1 text-xs font-semibold text-slate-700 border border-slate-300/70 shrink-0">
+        <div class="md:hidden inline-flex items-center gap-1 rounded-xl bg-slate-200/70 dark:bg-slate-900/70 p-1 text-xs font-semibold text-slate-700 dark:text-slate-300 dark:border-slate-700 border border-slate-300/70 shrink-0">
             <button type="button" @click="toggleMute('{{ key }}')"
                 class="px-2.5 py-1 rounded-lg transition-all duration-150 cursor-pointer"
-                :class="tracks.{{ key }}.muted ? 'bg-[#0B121E] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-white hover:text-slate-900'">
+                :class="tracks.{{ key }}.muted ? 'bg-[#0B121E] text-white font-bold shadow-2xs dark:bg-white dark:text-slate-900' : 'text-slate-700 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white'">
                 M
             </button>
             <button type="button" @click="toggleSolo('{{ key }}')"
                 class="px-2.5 py-1 rounded-lg transition-all duration-150 cursor-pointer"
-                :class="tracks.{{ key }}.solo ? 'bg-blue-600 text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-white hover:text-slate-900'">
+                :class="tracks.{{ key }}.solo ? 'bg-blue-600 text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white'">
                 S
             </button>
         </div>
@@ -57,7 +57,7 @@
 
     <!-- Representación de Waveform Dinámico Proporcional (Click-to-seek activo) -->
     <div @click="seekFromWaveform($event)" title="Haz clic para saltar a esta posición"
-        class="flex-1 h-10 sm:h-11 lg:h-12 flex items-center justify-center px-2.5 sm:px-3.5 lg:px-4 rounded-lg bg-slate-100/90 border border-slate-200/80 cursor-pointer">
+        class="flex-1 h-10 sm:h-11 lg:h-12 flex items-center justify-center px-2.5 sm:px-3.5 lg:px-4 rounded-lg bg-slate-100/90 border border-slate-200/80 dark:bg-slate-900/60 dark:border-slate-700 cursor-pointer">
         <div
             class="w-full flex items-center justify-between gap-[1.5px] sm:gap-[2px] lg:gap-[2.5px] h-8 sm:h-9 lg:h-10 overflow-hidden">
             {# 98 barras de onda de audio de alta resolución con alturas variadas #}
@@ -80,32 +80,32 @@
 
     <!-- Controles: Silenciar/Solo (Desktop) + Control de Ganancia / Volumen -->
     <div
-        class="flex items-center justify-between md:justify-end gap-3 sm:gap-4 lg:gap-5 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-slate-200/80">
+        class="flex items-center justify-between md:justify-end gap-3 sm:gap-4 lg:gap-5 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-slate-200/80 dark:border-slate-700">
         <!-- Grupo de botones Silenciar / Solo (Desktop >= md) -->
-        <div class="hidden md:inline-flex items-center gap-1 rounded-xl bg-slate-200/70 p-1 text-xs sm:text-sm font-semibold text-slate-700 border border-slate-300/75">
+        <div class="hidden md:inline-flex items-center gap-1 rounded-xl bg-slate-200/70 dark:bg-slate-900/70 p-1 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 dark:border-slate-700 border border-slate-300/75">
             <button type="button" @click="toggleMute('{{ key }}')"
                 class="px-2.5 sm:px-3 py-1 rounded-lg transition-all duration-150 cursor-pointer"
-                :class="tracks.{{ key }}.muted ? 'bg-[#0B121E] text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-white hover:text-slate-900'">
+                :class="tracks.{{ key }}.muted ? 'bg-[#0B121E] text-white font-bold shadow-2xs dark:bg-white dark:text-slate-900' : 'text-slate-700 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white'">
                 Silenciar
             </button>
             <button type="button" @click="toggleSolo('{{ key }}')"
                 class="px-2.5 sm:px-3 py-1 rounded-lg transition-all duration-150 cursor-pointer"
-                :class="tracks.{{ key }}.solo ? 'bg-blue-600 text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-white hover:text-slate-900'">
+                :class="tracks.{{ key }}.solo ? 'bg-blue-600 text-white font-bold shadow-2xs' : 'text-slate-700 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white'">
                 Solo
             </button>
         </div>
 
         <!-- Slider de Ganancia / Volumen Compacto y Claro -->
         <div class="flex items-center gap-2.5 w-full md:w-28 lg:w-32 xl:w-36">
-            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 shrink-0" fill="none" stroke="currentColor"
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 dark:text-slate-400 shrink-0" fill="none" stroke="currentColor"
                 stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round"
                     d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H4v4h4l4 4V6z" />
             </svg>
             <input type="range" min="0" max="100" x-model="tracks.{{ key }}.volume"
                 @input="updateTrackVolume('{{ key }}')" :disabled="tracks.{{ key }}.muted"
-                class="w-full cursor-pointer accent-blue-600 h-2 rounded-lg bg-slate-200">
-            <span class="text-xs font-mono font-semibold text-slate-700 w-10 text-right shrink-0 tabular-nums"
+                class="w-full cursor-pointer accent-blue-600 h-2 rounded-lg bg-slate-200 dark:bg-slate-700">
+            <span class="text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 w-10 text-right shrink-0 tabular-nums"
                 x-text="tracks.{{ key }}.muted ? 'MUTE' : tracks.{{ key }}.volume + '%'">{{ volume }}%</span>
         </div>
     </div>
