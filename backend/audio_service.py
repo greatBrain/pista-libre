@@ -50,12 +50,19 @@ class AudioService:
                 f"El archivo original de la sesión '{session_id}' no existe en disco."
             )
 
+        # 0. Idempotencia: una sesión ya separada no se vuelve a procesar
+        if session.status == SessionStatus.READY and self.storage.has_complete_stems(session_id):
+            return session
+
         # 1. Deduplicación instantánea por SHA-256: si esta misma canción ya fue separada antes,
-        # reutilizamos sus 4 stems en milisegundos sin volver a ejecutar la red neuronal.
-        cached_session = self.storage.try_reuse_cached_stems(session_id)
-        if cached_session is not None:
-            logger.info(f"Stems reutilizados desde caché SHA-256 para la sesión {session_id}")
-            return cached_session
+        # se devuelve la sesión existente (con OTRO session_id) y se descarta la recién subida.
+        existing_session = self.storage.reuse_existing_session(session_id)
+        if existing_session is not None:
+            logger.info(
+                f"Audio duplicado: la sesión {session_id} se descarta y se reutiliza "
+                f"{existing_session.session_id} (caché SHA-256)"
+            )
+            return existing_session
 
         # 2. Marcar estado como PROCESSING e iniciar separación
         self.storage.update_session(session_id, status=SessionStatus.PROCESSING)
@@ -67,15 +74,17 @@ class AudioService:
         try:
             stems_dir = session_dir / "stems"
             stems_dir.mkdir(parents=True, exist_ok=True)
+            duration_seconds: Optional[float] = None
             if settings.mock_demucs:
                 self._run_mock_separation(stems_dir)
             else:
-                self._run_demucs_engine(input_audio, stems_dir)
+                duration_seconds = self._run_demucs_engine(input_audio, stems_dir)
 
             updated_session = self.storage.update_session(
                 session_id,
                 status=SessionStatus.READY,
                 stems=StemsInfo.for_session(session_id),
+                duration_seconds=duration_seconds,
             )
             logger.info(f"Separación completada exitosamente para la sesión {session_id}")
             return updated_session
@@ -246,8 +255,10 @@ class AudioService:
             )
         return separator
 
-    def _run_demucs_engine(self, input_file: Path, stems_dir: Path) -> None:
-        """Ejecuta la separación neuronal en memoria y codifica los 4 stems MP3 en paralelo."""
+    def _run_demucs_engine(self, input_file: Path, stems_dir: Path) -> float:
+        """Ejecuta la separación neuronal en memoria y codifica los 4 stems MP3 en paralelo.
+        Retorna la duración real del audio en segundos.
+        """
         import torch
         from demucs.audio import encode_mp3, prevent_clip
 
@@ -290,3 +301,4 @@ class AudioService:
 
         elapsed = time.perf_counter() - t0
         logger.info(f"Motor Demucs ({settings.demucs_model}) completó '{input_file.name}' en {elapsed:.2f}s")
+        return sources["vocals"].shape[-1] / separator.samplerate

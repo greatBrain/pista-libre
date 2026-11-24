@@ -15,6 +15,35 @@ from typing import Iterator, Optional
 from backend.schemas import SessionResponse, SessionStatus, StemsInfo
 
 
+# Migraciones del esquema, versionadas con PRAGMA user_version.
+# Cada posición i corresponde a la versión i+1. Solo se AÑADEN pasos al final;
+# nunca se edita ni se reordena uno ya publicado.
+MIGRATIONS: tuple[tuple[str, ...], ...] = (
+    # v1: esquema inicial (idempotente para bases creadas antes del versionado)
+    (
+        """
+        CREATE TABLE IF NOT EXISTS sessions (
+            session_id TEXT PRIMARY KEY,
+            original_filename TEXT NOT NULL,
+            file_hash TEXT,
+            status TEXT NOT NULL,
+            vocals_url TEXT,
+            drums_url TEXT,
+            bass_url TEXT,
+            other_url TEXT,
+            error_message TEXT,
+            created_at REAL NOT NULL,
+            updated_at REAL NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_sessions_file_hash ON sessions (file_hash, status)",
+        "CREATE INDEX IF NOT EXISTS idx_sessions_status_updated ON sessions (status, updated_at DESC)",
+    ),
+    # v2: duración real de la canción (segundos), calculada al terminar Demucs
+    ("ALTER TABLE sessions ADD COLUMN duration_seconds REAL",),
+)
+
+
 class SessionRepository:
     """Gestiona la persistencia de sesiones en una base de datos SQLite local."""
 
@@ -36,37 +65,20 @@ class SessionRepository:
             conn.close()
 
     def _init_schema(self) -> None:
-        """Inicializa la tabla de sesiones y sus índices si no existen."""
+        """Aplica, en orden y una sola vez, las migraciones pendientes del esquema."""
         with self._connect() as conn:
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS sessions (
-                    session_id TEXT PRIMARY KEY,
-                    original_filename TEXT NOT NULL,
-                    file_hash TEXT,
-                    status TEXT NOT NULL,
-                    vocals_url TEXT,
-                    drums_url TEXT,
-                    bass_url TEXT,
-                    other_url TEXT,
-                    error_message TEXT,
-                    created_at REAL NOT NULL,
-                    updated_at REAL NOT NULL
-                )
-                """
-            )
-            conn.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_sessions_file_hash
-                ON sessions (file_hash, status)
-                """
-            )
-            conn.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_sessions_status_updated
-                ON sessions (status, updated_at DESC)
-                """
-            )
+            current_version = conn.execute("PRAGMA user_version").fetchone()[0]
+            for version, statements in enumerate(MIGRATIONS[current_version:], start=current_version + 1):
+                # Transacción explícita: el DDL y el número de versión se confirman juntos o nada
+                conn.execute("BEGIN")
+                try:
+                    for sql in statements:
+                        conn.execute(sql)
+                    conn.execute(f"PRAGMA user_version = {int(version)}")
+                    conn.execute("COMMIT")
+                except Exception:
+                    conn.execute("ROLLBACK")
+                    raise
 
     def create(self, session: SessionResponse, file_hash: Optional[str] = None) -> SessionResponse:
         """Inserta una nueva sesión en SQLite."""
@@ -77,8 +89,8 @@ class SessionRepository:
                 INSERT INTO sessions (
                     session_id, original_filename, file_hash, status,
                     vocals_url, drums_url, bass_url, other_url,
-                    error_message, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    error_message, duration_seconds, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     session.session_id,
@@ -90,6 +102,7 @@ class SessionRepository:
                     session.stems.bass,
                     session.stems.other,
                     session.error_message,
+                    session.duration_seconds,
                     now,
                     now,
                 ),
@@ -143,14 +156,18 @@ class SessionRepository:
         status: SessionStatus,
         stems: Optional[StemsInfo] = None,
         error_message: Optional[str] = None,
+        duration_seconds: Optional[float] = None,
     ) -> Optional[SessionResponse]:
-        """Actualiza el estado, rutas de stems o mensaje de error de una sesión."""
+        """Actualiza el estado, rutas de stems, mensaje de error o duración de una sesión.
+        Los campos opcionales en None conservan su valor actual.
+        """
         current = self.get(session_id)
         if current is None:
             return None
 
         new_stems = stems if stems is not None else current.stems
         new_error = error_message if error_message is not None else current.error_message
+        new_duration = duration_seconds if duration_seconds is not None else current.duration_seconds
 
         with self._connect() as conn:
             conn.execute(
@@ -162,6 +179,7 @@ class SessionRepository:
                     bass_url = ?,
                     other_url = ?,
                     error_message = ?,
+                    duration_seconds = ?,
                     updated_at = ?
                 WHERE session_id = ?
                 """,
@@ -172,6 +190,7 @@ class SessionRepository:
                     new_stems.bass,
                     new_stems.other,
                     new_error,
+                    new_duration,
                     time.time(),
                     session_id,
                 ),
@@ -209,5 +228,6 @@ class SessionRepository:
                 other=row["other_url"],
             ),
             error_message=row["error_message"],
+            duration_seconds=row["duration_seconds"],
         )
 

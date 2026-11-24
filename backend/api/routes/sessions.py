@@ -3,9 +3,10 @@
 Responsabilidad:
 - Recibir archivos de audio cargados por el usuario.
 - Delegar la validación y el almacenamiento al StorageManager.
-- Manejar códigos de estado HTTP semánticos (201, 400, 413, 404).
+- Eliminar sesiones (carpeta en disco + registro en SQLite).
+- Manejar códigos de estado HTTP semánticos (201, 204, 400, 413, 404).
 """
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
 
 from backend.api.deps import get_audio_service, get_storage_manager
 from backend.audio_service import AudioProcessingError, AudioService
@@ -72,6 +73,31 @@ async def get_session_status(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),
         )
+
+@router.delete(
+    "/{session_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Eliminar una sesión (carpeta con audio y stems + registro en la base de datos)",
+)
+def delete_session(
+    session_id: str,
+    storage: StorageManager = Depends(get_storage_manager),
+) -> Response:
+    """Borra definitivamente una sesión del disco y de SQLite."""
+    try:
+        storage.delete_session(session_id)
+    except SessionNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        )
+    except StorageError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 
 @router.post(
     "/{session_id}/separate",

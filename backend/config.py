@@ -17,7 +17,9 @@ class Settings(BaseModel):
     root_dir: Path = backend_dir.parent
     frontend_dir: Path = root_dir / "frontend"
     templates_dir: Path = frontend_dir / "templates"
-    storage_dir: Path = backend_dir / "storage"
+    storage_dir: Path = backend_dir / "storage"  # PÚBLICA: se sirve en /storage (solo audio)
+    data_dir: Path = backend_dir / "data"  # PRIVADA: nunca se monta como estático
+    db_path: Path = data_dir / "pista_libre.db"
     
     # Restricciones de archivos de audio
     allowed_audio_extensions: set[str] = {".mp3", ".wav", ".m4a", ".flac", ".ogg", ".aac"}

@@ -44,6 +44,9 @@ env/
 backend/storage/*
 !backend/storage/.gitkeep
 
+# Base de datos SQLite local (carpeta privada, fuera de /storage)
+backend/data/
+
 # Pesos de modelos PyTorch / Demucs si se descargaran en el directorio
 *.th
 *.pt

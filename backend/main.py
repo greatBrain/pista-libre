@@ -87,6 +87,14 @@ async def health_check() -> HealthResponse:
 STEM_NAMES: tuple[str, ...] = ("vocals", "drums", "bass", "other")
 
 
+def _format_duration(seconds: float | None) -> str:
+    """Formatea segundos como M:SS. Sin dato (sesiones antiguas o modo mock) retorna '--:--'."""
+    total = int(round(seconds or 0))
+    if total <= 0:
+        return "--:--"
+    return f"{total // 60}:{total % 60:02d}"
+
+
 def _empty_song_info(title: str, duration: str) -> dict:
     """Contrato de una sala sin audio (sin ?session= o con una sesión inexistente)."""
     return {
@@ -133,7 +141,7 @@ async def serve_practice(
             song_info = {
                 "id": user_session.session_id,
                 "title": title,
-                "duration": "--:--",
+                "duration": _format_duration(user_session.duration_seconds),
                 "stems": {name: stem_urls[name] or original_url for name in STEM_NAMES},
                 "stems_ready": all(real_stems.values()),
                 "real_stems": real_stems,
@@ -141,7 +149,8 @@ async def serve_practice(
         except (SessionNotFoundError, OSError):
             song_info = _empty_song_info(title="Sesión no encontrada", duration="0:00")
     else:
-        song_info = _empty_song_info(title="Sesión de Ensayo", duration="3:45")
+        # Sin sesión seleccionada: sin título (la plantilla omite el encabezado)
+        song_info = _empty_song_info(title="", duration="3:45")
 
     return templates.TemplateResponse(
         request=request,
@@ -149,6 +158,9 @@ async def serve_practice(
         context={
             "active_tab": "practice",
             "song_info": song_info,
+            # Panel lateral "Mis proyectos": cambiar de sesión sin volver al inicio
+            "user_sessions": storage.list_ready_sessions(),
+            "active_session_id": None if song_info["id"] == "custom" else song_info["id"],
         },
     )
 

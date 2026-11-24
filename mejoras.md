@@ -1,7 +1,31 @@
 # Mejoras recomendadas para Pista Libre
 
-> Revisión técnica del proyecto tal como está hoy (rama `main`, commit `3c1329f`).
+> Revisión técnica del proyecto (rama `main`). Primera versión: commit `3c1329f`, 23 nov 2026.
+> **Actualizada el 24 nov 2026** con el estado real del código tras la limpieza y las mejoras de la base de datos.
 > Escrito como lo haría tu tech lead: directo, priorizado y sin tocar lo que ya funciona.
+
+---
+
+## Estado al 24 de noviembre de 2026
+
+| Estado | Puntos |
+|---|---|
+| ✅ **Resuelto** | 1.1 (opción rápida), 1.2, 3.10 (casi), 4.5 (htmx), 6.1 (botón eliminar), 6.3, 6.4 |
+| 🟨 **Parcial** | 1.1 (originales aún públicos), 2.6, 3.2, 3.3, 3.4, 3.7, 3.8 (falta WAL), 4.5 (falta SRI), 6.1 (falta retención) |
+| ⏳ **Pendiente** | 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.5, 3.6, 3.9, 4.1–4.4, 4.6–4.8, 5.x, 6.2 |
+
+**Qué cambió desde la primera revisión:**
+
+- **Base de datos fuera de la carpeta pública.** Vive en `backend/data/pista_libre.db`. La base antigua se movió sola al arrancar, sin perder datos.
+- **Esquema versionado** con `PRAGMA user_version` (`backend/repository.py`, constante `MIGRATIONS`). Ya va por la versión 2, que añade `duration_seconds`.
+- **Deduplicación real.** Subir un audio idéntico devuelve la sesión existente en lugar de copiar sus stems. Ya no se duplican ~30 MB por canción ni se repite en "Mis proyectos".
+- **Eliminar proyectos.** Hay un endpoint `DELETE /api/sessions/{id}` y un botón de papelera en cada tarjeta.
+- **Duración real** de cada canción, guardada al terminar Demucs.
+- **Demos estáticas eliminadas.** Se borraron `catalog.py`, `/api/demos`, `?demo=`, `/demos`, las portadas y `DemoSession`.
+- **Código muerto eliminado:**
+  - en el backend: `ExportMixRequest`, `InstrumentType`, `settings.debug` y `demucs_timeout_seconds`;
+  - en el frontend: htmx, colores y sombras de Tailwind sin uso, 5 bloques de CSS sin uso, el bloque de portada y `resetAllTracks()`.
+- **Tests:** de 41 a 50 (nuevo `tests/test_database.py`). Pasan 49; el que falla es el mismo de siempre (punto 2.4).
 
 ---
 
@@ -12,7 +36,7 @@ Primero, lo bueno, porque hay bastante. El proyecto tiene una base sólida:
 - **Separación por capas.** Las rutas HTTP no hablan con el disco directamente. `StorageManager` gestiona archivos, `SessionRepository` gestiona SQLite y `AudioService` gestiona Demucs.
 - **Inyección de dependencias** con `Depends(...)`, lo que permite que los tests usen almacenamiento aislado.
 - **Validación de archivos:** extensión, *magic bytes*, tamaño por bloques y hash SHA-256 para reutilizar separaciones ya hechas.
-- **41 tests automatizados.**
+- **50 tests automatizados.**
 
 Nada de lo que sigue implica tirar eso. Son mejoras **incrementales**: cada punto se puede aplicar solo, en su propio commit, sin romper lo demás.
 
@@ -31,78 +55,47 @@ Mi consejo: haz las 🔴 primero y en orden. Las demás puedes repartirlas en el
 
 ## 🔴 1. Crítico: seguridad
 
-### 1.1 La base de datos se puede descargar desde el navegador
+### 1.1 La base de datos se podía descargar desde el navegador — 🟨 Parcial
 
-**Dónde:** `backend/main.py`, líneas 63–67.
+**Dónde:** `backend/main.py:68–72` (montaje de `/storage`).
+
+**Qué pasaba:** el montaje estático de `/storage` exponía toda la carpeta `backend/storage/`, incluida `pista_libre.db`. `GET /storage/pista_libre.db` respondía `200` con la base completa.
+
+**✅ Hecho (opción rápida):**
+
+- `backend/config.py` define `data_dir = backend/data` (carpeta privada, **no** montada) y `db_path`.
+- `StorageManager` usa `settings.db_path` por defecto. Si encuentra la base antigua en `storage/`, la mueve una sola vez junto con sus archivos auxiliares (`-journal`, `-wal`, `-shm`).
+  - Si ya existe una base nueva, nunca la sobrescribe: deja la antigua y lo avisa en el log.
+  - Si no puede moverla, sigue usando la antigua para no perder datos.
+- `backend/data/` está en `.gitignore`.
+- Verificado: `GET /storage/pista_libre.db` → `404`. Lo cubren los tests de `tests/test_database.py`.
+
+**⏳ Pendiente (opción correcta, a medio plazo):** los audios originales del usuario **siguen siendo públicos** en `/storage/<uuid>/original.mp3`. Para cerrarlo, no montes `/storage` como estático y sirve solo los stems:
 
 ```python
-app.mount(
-    "/storage",
-    StaticFiles(directory=settings.storage_dir, check_dir=False),
-    name="storage",
-)
+@app.get("/storage/{session_id}/stems/{stem}.mp3")
+async def serve_stem(session_id: UUID, stem: Literal["vocals", "drums", "bass", "other"]):
+    path = settings.storage_dir / str(session_id) / "stems" / f"{stem}.mp3"
+    if not path.is_file():
+        raise HTTPException(404)
+    return FileResponse(path, media_type="audio/mpeg")
 ```
 
-**Qué pasa:** este montaje expone **toda** la carpeta `backend/storage/` como archivos públicos. Ahí vive también `pista_libre.db`. Lo comprobé: `GET /storage/pista_libre.db` responde `200` y entrega la base de datos completa. También quedan expuestos los archivos originales que suben los usuarios (`/storage/<uuid>/original.mp3`).
-
-**Por qué importa:** cualquiera con la URL puede llevarse todos los nombres de archivo, los hashes y el historial de sesiones. Aunque hoy sea una app local, el día que la publiques esto es una fuga de datos.
-
-**Cómo arreglarlo, sin cambiar las URLs que ya usa el frontend:**
-
-1. **Opción rápida:** saca la base de datos de la carpeta pública. En `StorageManager.__init__` (`backend/storage_manager.py:71`) cambia la ruta por defecto a una carpeta que no esté montada:
-
-   ```python
-   # backend/config.py
-   data_dir: Path = backend_dir / "data"          # carpeta privada, NO montada
-   db_path: Path = data_dir / "pista_libre.db"
-   ```
-
-   ```python
-   # backend/storage_manager.py
-   resolved_db_path = db_path or settings.db_path
-   ```
-
-   Recuerda mover el archivo `.db` actual a la nueva ruta y añadir `backend/data/` al `.gitignore`.
-
-2. **Opción correcta, a medio plazo:** no montes `/storage` como estático. Sirve los stems con un endpoint que solo entregue `stems/*.mp3`:
-
-   ```python
-   @app.get("/storage/{session_id}/stems/{stem}.mp3")
-   async def serve_stem(session_id: UUID, stem: Literal["vocals", "drums", "bass", "other"]):
-       path = settings.storage_dir / str(session_id) / "stems" / f"{stem}.mp3"
-       if not path.is_file():
-           raise HTTPException(404)
-       return FileResponse(path, media_type="audio/mpeg")
-   ```
-
-   Así controlas exactamente qué se puede leer y el original del usuario deja de ser público.
+**Ojo:** `serve_practice` (`main.py`) usa `/storage/{id}/original.mp3` como respaldo cuando falta la URL de un stem. Si aplicas esto, ese respaldo deja de funcionar. Elimínalo a la vez; con stems completos nunca se usa.
 
 **Buena práctica:** *nunca montes como estático una carpeta donde la aplicación escribe datos.* Lo público y lo privado deben vivir en carpetas distintas.
 
 ---
 
-### 1.2 `/static` expone el código fuente de las plantillas
+### 1.2 `/static` exponía el código fuente de las plantillas — ✅ Resuelto
 
-**Dónde:** `backend/main.py`, líneas 51–55.
-
-```python
-app.mount("/static", StaticFiles(directory=settings.frontend_dir), name="static")
-```
-
-**Qué pasa:** se monta todo `frontend/`, incluidas las plantillas Jinja. `GET /static/templates/base.html` responde `200` con el código fuente.
-
-**Cómo arreglarlo:** monta solo lo que el navegador necesita. Las URLs actuales (`/static/css/style.css`, `/static/js/app.js`) no cambian:
-
-```python
-app.mount("/static/css", StaticFiles(directory=settings.frontend_dir / "css"), name="css")
-app.mount("/static/js",  StaticFiles(directory=settings.frontend_dir / "js"),  name="js")
-```
+Resuelto en el commit `0712931`. Ahora solo se montan `/static/css` y `/static/js` (`main.py:50–60`), y las plantillas Jinja ya no son accesibles.
 
 ---
 
-### 1.3 CORS abierto a todo el mundo y con credenciales
+### 1.3 CORS abierto a todo el mundo y con credenciales — ⏳ Pendiente
 
-**Dónde:** `backend/main.py`, líneas 39–45.
+**Dónde:** `backend/main.py:38–44`.
 
 ```python
 allow_origins=["*"],
@@ -115,14 +108,19 @@ allow_credentials=True,
 
 ```python
 if settings.cors_origins:
-    app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["GET", "POST"])
+    app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["GET", "POST", "DELETE"])
 ```
 
 ---
 
-### 1.4 Los mensajes de error revelan detalles internos
+### 1.4 Los mensajes de error revelan detalles internos — ⏳ Pendiente
 
-**Dónde:** `backend/api/routes/sessions.py:54` y `:96–102`, `backend/audio_service.py:89`.
+**Dónde:**
+
+- `backend/api/routes/sessions.py:55` (subida);
+- `backend/api/routes/sessions.py:92–97` (borrado, nuevo);
+- `backend/api/routes/sessions.py:118–128` (separación);
+- `backend/audio_service.py:92`.
 
 ```python
 detail=f"Error interno en el almacenamiento: {str(exc)}",
@@ -138,40 +136,46 @@ except StorageError:
     raise HTTPException(500, detail="No pudimos guardar el archivo. Intenta de nuevo.")
 ```
 
-Los errores **de validación** (formato no soportado, archivo muy grande) sí deben mostrarse: le sirven al usuario y no revelan nada interno.
+Los errores **de validación** (formato no soportado, archivo muy grande) y los `404` sí deben mostrarse: le sirven al usuario y no revelan nada interno.
 
 ---
 
-### 1.5 `/docs` siempre activo
+### 1.5 `/docs` siempre activo — ⏳ Pendiente
 
-**Dónde:** `backend/main.py:31`.
+**Dónde:** `backend/main.py:30`.
 
-Swagger UI está bien en desarrollo, pero en producción es un mapa de tu API para cualquiera. Actívalo solo en modo debug:
+Swagger UI está bien en desarrollo, pero en producción es un mapa de tu API para cualquiera. Actívalo con una variable explícita.
+
+**Nota:** `settings.debug` se eliminó porque no se usaba. Si lo necesitas, crea un ajuste con un nombre que diga lo que hace:
 
 ```python
-docs_url="/docs" if settings.debug else None,
+# config.py
+enable_docs: bool = os.getenv("ENABLE_DOCS", "false").lower() in {"1", "true", "yes"}
+
+# main.py
+docs_url="/docs" if settings.enable_docs else None,
 ```
 
 ---
 
 ## 🟠 2. Alto: bugs y problemas de experiencia
 
-### 2.1 La separación con Demucs bloquea la petición HTTP durante minutos
+### 2.1 La separación con Demucs bloquea la petición HTTP durante minutos — ⏳ Pendiente
 
-**Dónde:** `backend/api/routes/sessions.py:82` (endpoint `/separate`) y `frontend/templates/index.html:107–151` (`startSeparation`).
+**Dónde:** `backend/api/routes/sessions.py:108` (endpoint `/separate`) y `frontend/templates/index.html` (`startSeparation`).
 
 **Qué pasa:** el navegador hace `POST /separate` y **se queda esperando** la respuesta mientras Demucs procesa, que pueden ser varios minutos. Consecuencias:
 
 - Si el usuario recarga o cierra la pestaña, pierde el progreso visual, aunque el servidor siga trabajando.
 - Proxies, navegadores o un futuro despliegue (Nginx, Cloudflare) pueden cortar la conexión por *timeout*, normalmente a los 60–100 s.
 - La barra de progreso es falsa: salta de 15 % a 50 % a 100 %.
-- El ajuste `demucs_timeout_seconds = 600` (`config.py:31`) **no se usa en ningún sitio**.
+- No hay ningún límite de tiempo para Demucs. El ajuste `demucs_timeout_seconds` se eliminó porque no se aplicaba en ningún sitio; si lo necesitas, impleméntalo de verdad.
 
 **Lo bueno:** ya tienes casi todo para arreglarlo. Existe `SessionStatus.PROCESSING` y existe `GET /api/sessions/{id}`.
 
 **Cómo arreglarlo, en dos pasos:**
 
-1. **Backend:** que `/separate` lance el trabajo en segundo plano y responda de inmediato con `202 Accepted`:
+1. **Backend:** que `/separate` lance el trabajo en segundo plano y responda de inmediato con `202 Accepted`.
 
    ```python
    from fastapi import BackgroundTasks
@@ -179,12 +183,15 @@ docs_url="/docs" if settings.debug else None,
    @router.post("/{session_id}/separate", status_code=202, response_model=SessionResponse)
    def separate_session_audio(session_id: str, background: BackgroundTasks,
                               audio_service: AudioService = Depends(get_audio_service)):
+       existing = audio_service.storage.reuse_existing_session(session_id)
+       if existing is not None:
+           return existing                      # duplicado: instantáneo, sin encolar
        session = audio_service.storage.get_session(session_id)
        background.add_task(audio_service.separate_tracks, session_id)
        return session
    ```
 
-   Cuidado: `try_reuse_cached_stems` es instantáneo, así que conviene llamarlo **antes** de encolar y, si hay caché, devolver la sesión `READY` directamente.
+   **Cuidado con la deduplicación:** `reuse_existing_session` puede devolver **otro** `session_id` (el de la canción original) y borra la sesión recién subida. El frontend ya usa el `session_id` de la respuesta de `/separate` (`index.html`, tras el `fetch`). Respeta eso al pasar a consultas periódicas (polling).
 
 2. **Frontend:** en `startSeparation`, tras el `POST`, consulta el estado cada 2 segundos hasta que sea `ready` o `error`:
 
@@ -203,9 +210,9 @@ docs_url="/docs" if settings.debug else None,
 
 ---
 
-### 2.2 Dos separaciones a la vez saturan la CPU
+### 2.2 Dos separaciones a la vez saturan la CPU — ⏳ Pendiente
 
-**Dónde:** `backend/audio_service.py:37` (`_separator_cache`) y `:205` (`_get_separator`).
+**Dónde:** `backend/audio_service.py` (`_separator_cache` y `_get_separator`).
 
 **Qué pasa:** si dos usuarios, o dos pestañas, lanzan una separación a la vez, FastAPI ejecuta ambas en paralelo en su *threadpool*. Las dos usan el mismo modelo en memoria y se reparten los mismos 6 hilos de CPU: cada una tarda el doble o más. Además, si el modelo aún no está cargado, **ambas peticiones lo cargan a la vez**, con el doble de RAM.
 
@@ -227,15 +234,15 @@ class AudioService:
 
 ---
 
-### 2.3 Las descargas entregan MP3 falsos en lugar de un error
+### 2.3 Las descargas entregan MP3 falsos en lugar de un error — ⏳ Pendiente
 
-**Dónde:** `backend/main.py:260–264` y `:280–285`.
+**Dónde:** `backend/main.py:199–213` (ZIP) y `:224–229` (stem individual).
 
 ```python
 dummy_audio_bytes = b"ID3\x04\x00\x00\x00\x00\x00\x00Pista Libre " + filename.encode()
 ```
 
-**Qué pasa:** si un stem no existe, el servidor devuelve un "MP3" de 30 bytes que no se puede reproducir, con código `200`. El usuario descarga un archivo roto y cree que la app funciona mal. Lo comprobé: `GET /download/voz.mp3` sin sesión devuelve justo eso.
+**Qué pasa:** si un stem no existe, el servidor devuelve un "MP3" de 30 bytes que no se puede reproducir, con código `200`. El usuario descarga un archivo roto y cree que la app funciona mal. `GET /download/voz.mp3` sin sesión devuelve justo eso.
 
 **Cómo arreglarlo:** si el archivo no existe, responde `404` con un mensaje claro. En el ZIP, incluye solo los stems que existan y, si no hay ninguno, `404`.
 
@@ -244,11 +251,13 @@ if not (stems_dir and (stems_dir / disk_filename).is_file()):
     raise HTTPException(404, detail="Esta pista aún no está disponible.")
 ```
 
+**Ojo:** `modal_decision.html` usa `/download/...` **sin** `?session=` como respaldo cuando `sessionId` es nulo. Con este cambio, esos enlaces darían `404`. Elimina ese respaldo a la vez; el modal solo se abre con una sesión válida.
+
 **Buena práctica:** *no inventes datos para ocultar un error.* Un error honesto se depura en minutos; un archivo corrupto silencioso, en horas.
 
 ---
 
-### 2.4 Hay un test fallando
+### 2.4 Hay un test fallando — ⏳ Pendiente
 
 **Dónde:** `tests/test_phase2_practice_room.py:112`.
 
@@ -256,17 +265,17 @@ if not (stems_dir and (stems_dir / disk_filename).is_file()):
 assert "4 pistas listas" in html
 ```
 
-Al correr `pytest` obtengo **1 fallo y 40 OK**. El texto de la UI cambió a `"4 pistas"` (en `demo_sessions.html`) y el test no se actualizó.
+Al correr `pytest` obtengo **1 fallo y 49 OK**. Ese texto ya no existe en la interfaz y el test no se actualizó.
 
-**Cómo arreglarlo:** actualiza el texto esperado. Mejor aún, no compruebes textos de diseño, que cambian a menudo. Comprueba algo estable, como el enlace `/practice?session=...`, que ya se verifica dos líneas antes.
+**Cómo arreglarlo:** borra esa línea. No compruebes textos de diseño, que cambian a menudo. Lo importante ya se verifica dos líneas antes: el enlace `/practice?session=...` y el nombre de la canción.
 
 **Buena práctica:** *la suite de tests debe estar siempre en verde.* Un test roto que "ya sabemos que falla" acostumbra al equipo a ignorar fallos reales.
 
 ---
 
-### 2.5 El límite de 10 MB se comprueba después de recibir todo el archivo
+### 2.5 El límite de 10 MB se comprueba después de recibir todo el archivo — ⏳ Pendiente
 
-**Dónde:** `backend/storage_manager.py:207–250` (`save_upload_file`).
+**Dónde:** `backend/storage_manager.py` (`save_upload_file`).
 
 **Qué pasa:** FastAPI/Starlette recibe el archivo **completo** (en memoria o en un temporal del disco) antes de que tu código lo lea por bloques. Si alguien sube 2 GB, el servidor los acepta primero y los rechaza después.
 
@@ -283,37 +292,41 @@ Mantén también tu validación por bloques: la cabecera se puede falsificar, as
 
 ---
 
-### 2.6 `/practice` sin parámetros muestra una sesión inventada
+### 2.6 `/practice` sin parámetros muestra una sala vacía — 🟨 Parcial
 
-**Dónde:** `backend/main.py:182–199`.
+**Dónde:** `backend/main.py:150–152` (`_empty_song_info`).
 
-Si alguien entra a `/practice` sin `?demo=` ni `?session=` (por ejemplo, desde la pestaña "Sala de ensayo" del navbar), ve una canción ficticia: "Sesión de Ensayo", duración `3:45` y un reproductor que simula tiempo sin sonido. Y si la sesión no existe, la página responde `200` con el título "Sesión no encontrada".
+**✅ Hecho:** ya no existen las demos ni `?demo=`. La sala sin parámetros ya no apunta a audios de ejemplo inexistentes.
+
+**✅ Hecho también:** sin `?session=` ya no aparece el encabezado inventado "Sesión de Ensayo"; la sala se muestra sin título y con el panel "Mis proyectos" para elegir una.
+
+**⏳ Pendiente:** esa sala sin sesión sigue mostrando un temporizador de `3:45` que avanza sin sonido y el botón "Descargar stems" activo. Y si la sesión no existe, la página responde `200` con el título "Sesión no encontrada".
 
 **Recomendación de producto:**
 
-- Sin parámetros: redirige a la primera demo (`/practice?demo=solution`) o muestra un estado vacío del tipo "Elige una canción para empezar".
+- Sin parámetros: muestra un estado vacío del tipo "Elige una canción para empezar", con enlaces a "Mis proyectos".
 - Sesión inexistente: responde `404` con una página amable y un botón para volver al inicio.
 
 ---
 
 ## 🟡 3. Medio: rendimiento y arquitectura del backend
 
-### 3.1 Se escanea todo el disco en cada petición
+### 3.1 Se escanea todo el disco en cada petición — ⏳ Pendiente
 
-**Dónde:** `backend/api/deps.py:11` y `backend/storage_manager.py:73`.
+**Dónde:** `backend/api/deps.py:11` y `backend/storage_manager.py:124`.
 
 ```python
 def get_storage_manager() -> StorageManager:
     return StorageManager()        # nueva instancia en CADA petición
 ```
 
-```python
-def __init__(...):
-    ...
-    self._index_existing_disk_sessions()   # recorre todas las carpetas de /storage
-```
+**Qué pasa:** cada vez que alguien abre `/`, `/practice` o descarga algo, se crea un `StorageManager` nuevo. Al crearse:
 
-**Qué pasa:** cada vez que alguien abre `/`, `/practice` o descarga algo, se crea un `StorageManager` nuevo que recorre todas las carpetas de sesiones y hace varias consultas SQLite por cada una. Si una sesión no tiene hash, también lo **recalcula leyendo el MP3 completo**. Con 10 sesiones no se nota; con 500 sí. Además, `try_reuse_cached_stems` (`storage_manager.py:295`) vuelve a llamar al escaneo.
+- abre SQLite y comprueba las migraciones;
+- comprueba si hay una base antigua que mover;
+- recorre todas las carpetas de sesiones, con varias consultas por cada una. Si una sesión no tiene hash, también lo **recalcula leyendo el MP3 completo**.
+
+Con 10 sesiones no se nota; con 500 sí. Además, `reuse_existing_session` (`storage_manager.py:381`) vuelve a llamar al escaneo.
 
 **Cómo arreglarlo:**
 
@@ -344,104 +357,81 @@ def __init__(...):
 
 ---
 
-### 3.2 La lista de stems está repetida en al menos 8 sitios
+### 3.2 La lista de stems está repetida en varios sitios — 🟨 Parcial
 
-Los nombres `vocals / drums / bass / other` y las URLs `/storage/{id}/stems/xxx.mp3` aparecen escritos a mano en:
+**✅ Hecho:** `StemsInfo.for_session(session_id)` (`backend/schemas.py`) es ya la única fuente de las URLs `/storage/{id}/stems/{stem}.mp3`. Sustituyó tres bloques escritos a mano, y `catalog.py` ya no existe.
 
-| Archivo | Líneas |
-|---|---|
-| `backend/storage_manager.py` | 52, 121–126, 326–331 |
-| `backend/audio_service.py` | 36, 75–80 |
-| `backend/main.py` | 141–146, 155–160, 215–220 |
-| `backend/catalog.py` | 25–30, 42–47, 59–64, 92–97 |
-| `frontend/js/app.js` | 12 |
+**⏳ Pendiente:** los **nombres** de los stems siguen repetidos en:
+
+| Archivo | Línea | Qué |
+|---|---|---|
+| `backend/storage_manager.py` | 95 | `EXPECTED_STEMS` (con `.mp3`) |
+| `backend/audio_service.py` | 36 | `EXPECTED_STEMS` |
+| `backend/main.py` | 87, 167 | `STEM_NAMES`, `STEM_FILE_MAP` |
+| `frontend/js/app.js` | 12 | `STEM_KEYS` |
 
 **Por qué importa:** si mañana añades un quinto stem (por ejemplo, "piano", que Demucs `htdemucs_6s` soporta), tendrás que tocar todos esos sitios y te olvidarás de alguno.
 
-**Cómo arreglarlo:** una sola fuente de verdad en `backend/schemas.py`, más un *helper*:
-
-```python
-# backend/schemas.py
-STEM_NAMES: tuple[str, ...] = ("vocals", "drums", "bass", "other")
-
-class StemsInfo(BaseModel):
-    ...
-    @classmethod
-    def for_session(cls, session_id: str) -> "StemsInfo":
-        return cls(**{s: f"/storage/{session_id}/stems/{s}.mp3" for s in STEM_NAMES})
-
-    @classmethod
-    def for_demo(cls, folder: str) -> "StemsInfo":
-        return cls(**{s: f"/storage/demos/{folder}/{s}.mp3" for s in STEM_NAMES})
-```
-
-Así, los 4 bloques de `StemsInfo(vocals=..., drums=..., ...)` se reducen a `StemsInfo.for_session(session_id)`, y el catálogo de demos queda en la mitad de líneas.
+**Cómo terminarlo:** define `STEM_NAMES` una vez en `backend/schemas.py`, haz que `for_session` lo recorra e impórtalo en el resto. Para el frontend, `app.js` puede tomar las claves de `song_info.stems`, que ya llega en el JSON de la página.
 
 ---
 
-### 3.3 `serve_practice` construye diccionarios a mano
+### 3.3 `serve_practice` construye diccionarios a mano — 🟨 Parcial
 
-**Dónde:** `backend/main.py:113–209`.
+**Dónde:** `backend/main.py:84–162`.
 
-La función tiene unas 100 líneas y arma el mismo diccionario `song_info` tres veces con claves escritas a mano. Si añades un campo, tienes que acordarte de las tres versiones, y la plantilla no avisa si falta una clave.
+**✅ Hecho:**
 
-**Cómo arreglarlo:** crea un esquema Pydantic `SongInfo` en `schemas.py` y lleva la lógica a funciones pequeñas en un módulo de servicio (por ejemplo, `backend/practice_service.py`):
+- Los dos bloques casi iguales de "sala vacía" son ahora una función, `_empty_song_info()`.
+- La duración la formatea `_format_duration()`.
+- Se quitaron las claves que nadie leía (`artist`, `genre`, `bpm` y `cover_image_url`).
+
+**⏳ Opcional:** un esquema Pydantic `SongInfo` en `schemas.py` daría validación y autocompletado al contrato que recibe `practice.html` / `app.js`:
 
 ```python
 class SongInfo(BaseModel):
     id: str
     title: str
-    artist: str
     duration: str
-    cover_image_url: str = ""
-    genre: str | None = None
-    bpm: int | None = None
-    stems: StemsInfo
+    stems: dict[str, str]
     stems_ready: bool
     real_stems: dict[str, bool]
-
-def song_info_from_demo(demo: DemoSession) -> SongInfo: ...
-def song_info_from_session(session: SessionResponse, storage: StorageManager) -> SongInfo: ...
 ```
-
-La ruta queda en 10 líneas y pasa `song_info.model_dump()` a la plantilla. El HTML no cambia.
 
 **Buena práctica:** *las rutas HTTP deben ser delgadas.* Reciben, delegan y responden. La lógica vive en servicios que puedes probar sin levantar el servidor.
 
 ---
 
-### 3.4 Configuración: usa `pydantic-settings`
+### 3.4 Configuración: usa `pydantic-settings` — 🟨 Parcial
 
 **Dónde:** `backend/config.py`.
 
-Hoy las variables de entorno se leen con `os.getenv(...)` **al definir la clase** (líneas 14, 29, 30). Eso tiene dos problemas: los valores quedan fijados al importar el módulo, y la conversión a `bool` está hecha a mano.
+**✅ Hecho:** se eliminaron `debug`, que estaba activo por defecto y no se usaba, y `demucs_timeout_seconds`. También se quitó `DEBUG` de `.env.example`.
 
-**Cómo arreglarlo:** `pydantic-settings` es la herramienta oficial para esto y lee `.env` sola:
+**⏳ Pendiente:**
 
-```python
-from pydantic_settings import BaseSettings, SettingsConfigDict
+- Las variables de entorno se siguen leyendo con `os.getenv(...)` **al definir la clase** (líneas 30–31). Los valores quedan fijados al importar el módulo y la conversión a `bool` está hecha a mano. `pydantic-settings` resuelve ambas cosas y lee `.env` sola:
 
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+  ```python
+  from pydantic_settings import BaseSettings, SettingsConfigDict
 
-    debug: bool = False                # lee DEBUG=true/false/1/0 automáticamente
-    mock_demucs: bool = False
-    demucs_model: str = "hdemucs_mmi"
-    ...
-```
+  class Settings(BaseSettings):
+      model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-Dos detalles más del mismo archivo:
+      mock_demucs: bool = False          # lee MOCK_DEMUCS=true/false/1/0 automáticamente
+      demucs_model: str = "hdemucs_mmi"
+      ...
+  ```
 
-- **`debug` vale `true` por defecto** (línea 14). Lo seguro es al revés: `false` por defecto y `true` solo en tu `.env` local.
-- **Las líneas 44–45 crean carpetas al importar el módulo.** Importar un archivo no debería tener efectos en el disco. Mueve esa creación al `lifespan` del punto 3.1.
+- **La línea 44 crea una carpeta al importar el módulo.** Importar un archivo no debería tener efectos en el disco. Mueve esa creación al `lifespan` del punto 3.1.
 
 ---
 
-### 3.5 Logging sin configurar
+### 3.5 Logging sin configurar — ⏳ Pendiente
 
-**Dónde:** `backend/audio_service.py` (usa `logger.info(...)`), pero nadie configura el logging.
+**Dónde:** `backend/audio_service.py` y `backend/storage_manager.py` usan `logger`, pero nadie configura el logging.
 
-**Qué pasa:** según cómo arranques uvicorn, tus `logger.info` de Demucs (tiempos de separación, caché reutilizada) **pueden no aparecer en consola**. Además se usan *f-strings* dentro del log:
+**Qué pasa:** según cómo arranques uvicorn, tus `logger.info` (tiempos de Demucs, caché reutilizada, migración de la base) **pueden no aparecer en consola**. Además, `audio_service.py` usa *f-strings* dentro del log:
 
 ```python
 logger.info(f"Separación completada exitosamente para la sesión {session_id}")
@@ -453,7 +443,7 @@ logger.info(f"Separación completada exitosamente para la sesión {session_id}")
 # backend/main.py, al inicio
 import logging
 logging.basicConfig(
-    level=logging.DEBUG if settings.debug else logging.INFO,
+    level=os.getenv("LOG_LEVEL", "INFO"),
     format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
 )
 ```
@@ -463,15 +453,17 @@ logging.basicConfig(
 logger.info("Separación completada para la sesión %s", session_id)
 ```
 
+`storage_manager.py` ya usa este estilo.
+
 ---
 
-### 3.6 Excepciones que se tragan en silencio
+### 3.6 Excepciones que se tragan en silencio — ⏳ Pendiente
 
 **Dónde:**
 
-- `backend/storage_manager.py:145` (`except Exception: continue`)
-- `backend/storage_manager.py:349` (`except Exception: return []`)
-- `backend/storage_manager.py:365` (`except Exception: pass`)
+- `backend/storage_manager.py:199` (`except Exception: continue`, reindexado)
+- `backend/storage_manager.py:426` (`except Exception: return []`, listado)
+- `backend/storage_manager.py:434` (`except Exception: pass`, autolimpieza)
 
 **Qué pasa:** si SQLite se corrompe o hay un problema de permisos, la página de inicio simplemente muestra "No tienes salas" y **nadie se entera**.
 
@@ -485,11 +477,11 @@ except Exception:
 
 ---
 
-### 3.7 Valida que los IDs de sesión sean UUID
+### 3.7 Valida que los IDs de sesión sean UUID — 🟨 Parcial
 
-**Dónde:** `backend/api/routes/sessions.py:64, 83` y `backend/main.py:117, 226`.
+**✅ Hecho:** `StorageManager.delete_session` solo acepta IDs con forma de UUID. Además exige que la sesión exista en SQLite y que su carpeta esté dentro de `storage_dir`. Es el punto más delicado, porque borra del disco.
 
-Hoy `session_id` es un `str` libre que luego se usa para construir rutas en disco (`storage_dir / session_id`). En la práctica no es explotable, porque antes se consulta SQLite, pero es defensa en profundidad gratis:
+**⏳ Pendiente** en el resto de entradas: `GET /api/sessions/{id}`, `POST /api/sessions/{id}/separate`, `/practice?session=` y `/download?session=`. Hoy no es explotable, porque antes se consulta SQLite, pero es defensa en profundidad gratis:
 
 ```python
 from uuid import UUID
@@ -498,38 +490,34 @@ async def get_session_status(session_id: UUID, ...):
     return storage.get_session(str(session_id))
 ```
 
-FastAPI rechaza con `422` cualquier cosa que no sea un UUID válido, antes de tocar tu código.
+FastAPI rechaza con `422` cualquier cosa que no sea un UUID válido, antes de tocar tu código. **Ojo:** los tests de `test_phase1_pipeline.py` y `test_sessions_api.py` esperan `404` con IDs como `no-existe-uuid`; habría que actualizarlos a `422`.
 
 ---
 
-### 3.8 SQLite: modo WAL y versionado del esquema
+### 3.8 SQLite: modo WAL y versionado del esquema — 🟨 Parcial
 
-**Dónde:** `backend/repository.py:27–69`.
+**Dónde:** `backend/repository.py`.
 
-1. **Activa el modo WAL** una vez en `_init_schema`. Permite que haya lecturas mientras se escribe, lo cual importa cuando la separación actualiza estados y la home lista sesiones a la vez:
+**✅ Hecho: esquema versionado.**
 
-   ```python
-   conn.execute("PRAGMA journal_mode=WAL")
-   ```
+- `MIGRATIONS` es una tupla de pasos y `PRAGMA user_version` guarda cuál es el último aplicado.
+- Cada paso se aplica en su propia transacción, junto con el número de versión: o se aplica entero o no se aplica.
+- Versión actual: **2**. La v1 es el esquema inicial, idempotente para bases anteriores al versionado; la v2 añade `duration_seconds`.
+- **Regla:** solo se añaden pasos al final; nunca se edita uno ya aplicado.
 
-2. **Versiona el esquema.** Hoy usas `CREATE TABLE IF NOT EXISTS`. El día que añadas una columna (por ejemplo, `duration_seconds`), las bases existentes no la tendrán y la app fallará. Solución mínima sin dependencias, usando `PRAGMA user_version`:
+**⏳ Pendiente: modo WAL.** Permite que haya lecturas mientras se escribe, lo cual importa cuando la separación actualiza estados y la home lista sesiones a la vez:
 
-   ```python
-   MIGRATIONS = [
-       "CREATE TABLE IF NOT EXISTS sessions (...)",               # v1
-       "ALTER TABLE sessions ADD COLUMN duration_seconds REAL",   # v2 (futuro)
-   ]
-   version = conn.execute("PRAGMA user_version").fetchone()[0]
-   for i, sql in enumerate(MIGRATIONS[version:], start=version + 1):
-       conn.execute(sql)
-       conn.execute(f"PRAGMA user_version = {i}")
-   ```
+```python
+conn.execute("PRAGMA journal_mode=WAL")
+```
+
+Al activarlo aparecen `pista_libre.db-wal` y `-shm` junto a la base. Están en la carpeta privada `backend/data/`, y la migración del punto 1.1 ya los contempla.
 
 ---
 
-### 3.9 El ZIP se comprime sin necesidad
+### 3.9 El ZIP se comprime sin necesidad — ⏳ Pendiente
 
-**Dónde:** `backend/main.py:255`.
+**Dónde:** `backend/main.py:199`.
 
 ```python
 zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED)
@@ -537,20 +525,27 @@ zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED)
 
 Los MP3 ya están comprimidos. Pasarlos por `DEFLATED` gasta CPU y apenas reduce un 1–2 %. Usa `zipfile.ZIP_STORED` y la descarga se genera mucho más rápido.
 
-Ya que tocas esa zona, pon el nombre del archivo entre comillas en la cabecera (línea 268): `f'attachment; filename="{filename}"'`.
+Ya que tocas esa zona, pon el nombre del archivo entre comillas en las cabeceras (líneas 212 y 228): `f'attachment; filename="{filename}"'`.
 
 ---
 
-### 3.10 Código sin uso
+### 3.10 Código sin uso — ✅ Casi resuelto
 
-- `backend/schemas.py:44–47`: `ExportMixRequest` no se usa en ningún sitio, e `InstrumentType` solo lo usa ese modelo. Si son para una funcionalidad futura (exportar mezcla), déjalos con un comentario `# TODO: export mix (pendiente)`; si no, bórralos.
-- `backend/storage_manager.py:55–62`: en `AUDIO_SIGNATURES`, las entradas de `.wav` y `.m4a` nunca se consultan, porque `_check_magic_bytes` las trata aparte. Funciona, pero confunde al leerlo.
+**✅ Eliminado:**
+
+- en el backend: `ExportMixRequest`, `InstrumentType`, `settings.debug` y `demucs_timeout_seconds`;
+- en el frontend: htmx, los colores `playback`/`stem` y las sombras `card-hover`/`floating` de Tailwind, 5 bloques de `style.css` y `resetAllTracks()`.
+
+**⏳ Queda (menor):**
+
+- `backend/storage_manager.py:100, 103`: en `AUDIO_SIGNATURES`, las entradas de `.wav` y `.m4a` nunca se consultan, porque `_check_magic_bytes` las trata aparte. Funciona, pero confunde al leerlo.
+- `frontend/assets/img/icons/`: `bass.svg`, `drums.svg`, `guitar.svg`, `microphone.svg` y `piano.svg` no se usan; se usan las versiones `-black`. Bórralos si no los quieres como recursos de diseño.
 
 ---
 
 ## 🟡 4. Medio: frontend
 
-### 4.1 El waveform re-renderiza unos 400 elementos cada 100 ms
+### 4.1 El waveform re-renderiza unos 400 elementos cada 100 ms — ⏳ Pendiente
 
 **Dónde:** `frontend/templates/components/track_card.html:72–77`.
 
@@ -582,11 +577,11 @@ Pasas de 392 *bindings* a 4. El `clip-path` lo resuelve la GPU.
 
 ---
 
-### 4.2 Lógica de Alpine dentro del HTML
+### 4.2 Lógica de Alpine dentro del HTML — ⏳ Pendiente
 
-**Dónde:** `frontend/templates/index.html:6–152`.
+**Dónde:** `frontend/templates/index.html:6–155`.
 
-El estado y las funciones de la pantalla de subida (≈150 líneas de JavaScript) están escritos **dentro del atributo `x-data`**. Ahí no hay resaltado de sintaxis ni linter, cuesta depurar y el navegador no lo puede cachear.
+El estado y las funciones de la pantalla de subida (≈150 líneas de JavaScript) están escritos **dentro del atributo `x-data`**. Ahí no hay resaltado de sintaxis ni linter, cuesta depurar y el navegador no lo puede cachear. Lo mismo, a menor escala, con el `@click` del botón de eliminar en `demo_sessions.html`.
 
 **Cómo arreglarlo:** muévelo a `frontend/js/app.js` (o a un `uploader.js` nuevo), igual que ya hiciste con `practiceRoom()`:
 
@@ -610,7 +605,7 @@ Ganas consistencia: ambas pantallas siguen el mismo patrón.
 
 ---
 
-### 4.3 HTML repetido que puede ser un bucle
+### 4.3 HTML repetido que puede ser un bucle — ⏳ Pendiente
 
 Hay bloques idénticos copiados 4 veces, uno por instrumento:
 
@@ -637,7 +632,7 @@ Cambiar un estilo pasa de 4 ediciones a 1. Lo ideal es que esta lista venga del 
 
 ---
 
-### 4.4 Tailwind por CDN no es para producción
+### 4.4 Tailwind por CDN no es para producción — ⏳ Pendiente
 
 **Dónde:** `frontend/templates/base.html:16`.
 
@@ -658,16 +653,19 @@ tailwindcss.exe -i frontend/css/input.css -o frontend/css/tailwind.css --watch
 tailwindcss.exe -i frontend/css/input.css -o frontend/css/tailwind.css --minify
 ```
 
-Mueve tu `tailwind.config` actual (colores `brand`, `stem`, `darkMode: 'class'`) al `tailwind.config.js` y en `base.html` reemplaza el `<script>` por un `<link>`. El resultado es un CSS de unos 15–25 KB, cacheable, sin JavaScript.
+Mueve tu `tailwind.config` actual (colores `brand`, sombra `card`, `darkMode: 'class'`) al `tailwind.config.js` y en `base.html` reemplaza el `<script>` por un `<link>`. El resultado es un CSS de unos 15–25 KB, cacheable, sin JavaScript.
 
 ---
 
-### 4.5 Scripts de terceros: htmx sin usar y sin integridad
+### 4.5 Scripts de terceros sin integridad — 🟨 Parcial
 
-**Dónde:** `frontend/templates/base.html:56–64`.
+**Dónde:** `frontend/templates/base.html:46–50`.
 
-- **htmx se carga, pero no se usa** (no hay ni un `hx-` en las plantillas). Son unos 50 KB descargados en cada página. Quítalo hasta que lo necesites.
-- Los scripts de CDN no tienen **`integrity` (SRI)**. Si el CDN se viera comprometido, ejecutaría código ajeno en tu web. Añade el hash:
+**✅ Hecho:** se eliminó htmx, que se cargaba pero no se usaba (unos 50 KB por página).
+
+**⏳ Pendiente:**
+
+- Los scripts de CDN (Howler y Alpine) no tienen **`integrity` (SRI)**. Si el CDN se viera comprometido, ejecutaría código ajeno en tu web. Añade el hash:
 
   ```html
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"
@@ -682,9 +680,9 @@ Mueve tu `tailwind.config` actual (colores `brand`, `stem`, `darkMode: 'class'`)
 
 ---
 
-### 4.6 Sincronización de pistas: posibles "clicks" audibles
+### 4.6 Sincronización de pistas: posibles "clicks" audibles — ⏳ Pendiente
 
-**Dónde:** `frontend/js/app.js:280–289`.
+**Dónde:** `frontend/js/app.js:13` (`MAX_DRIFT_SECONDS`) y `:268–279` (corrección de deriva).
 
 Cada 100 ms, si una pista se desfasa más de 35 ms respecto a la principal, se le hace `seek()`. Cada `seek` en Howler reinicia el nodo de audio y puede producir un pequeño chasquido. 35 ms es un umbral muy agresivo.
 
@@ -695,12 +693,12 @@ Cada 100 ms, si una pista se desfasa más de 35 ms respecto a la principal, se l
 
 ---
 
-### 4.7 Accesibilidad
+### 4.7 Accesibilidad — ⏳ Pendiente
 
 Mejoras rápidas que no cambian el diseño:
 
-- **Botones solo con icono** (`player_bar.html`: reiniciar; `modal_decision.html`: cerrar): tienen `title`, pero añade `aria-label`, que es lo que leen los lectores de pantalla.
-- **Botones Silenciar y Solo** (`track_card.html:45–55, 86–95`): añade `:aria-pressed="tracks.vocals.muted"` para que se anuncie si están activos.
+- **Botones solo con icono** (`player_bar.html`: reiniciar; `modal_decision.html`: cerrar): tienen `title`, pero añade `aria-label`, que es lo que leen los lectores de pantalla. El nuevo botón de eliminar proyecto ya lo tiene.
+- **Botones Silenciar y Solo** (`track_card.html:45–52, 86–95`): añade `:aria-pressed="tracks.vocals.muted"` para que se anuncie si están activos.
 - **Sliders de volumen** (`track_card.html:105`, `player_bar.html:61`): añade `aria-label="Volumen de voces"`, etc.
 - **Íconos decorativos:** en las imágenes que acompañan a un texto visible (como en `instrument_selector.html`), usa `alt=""` para que no se lean dos veces.
 - **`prefers-reduced-motion`:** las transiciones están bien, pero hay usuarios que las desactivan en su sistema. Añade a `style.css`:
@@ -713,11 +711,11 @@ Mejoras rápidas que no cambian el diseño:
 
 ---
 
-### 4.8 Tema claro/oscuro: dos detalles pendientes
+### 4.8 Tema claro/oscuro: dos detalles pendientes — ⏳ Pendiente
 
-**Dónde:** `frontend/templates/components/mode-switcher.html`.
+**Dónde:** `frontend/templates/components/mode-switcher.html` (incluido ahora en `navbar.html`).
 
-1. **Parpadeo al cargar.** El script que aplica el tema guardado está dentro del componente, a mitad del `<body>`. Si alguna vez ves un destello claro antes del oscuro, mueve estas dos líneas al `<head>` de `base.html`, justo después del `<script>` de Tailwind:
+1. **Parpadeo al cargar.** El script que aplica el tema guardado está dentro del componente, a mitad del `<body>`. Si alguna vez ves un destello claro antes del oscuro, mueve estas líneas al `<head>` de `base.html`, justo después del `<script>` de Tailwind:
 
    ```html
    <script>
@@ -738,7 +736,7 @@ Mejoras rápidas que no cambian el diseño:
 
 ## 🟢 5. Bajo: calidad, herramientas y flujo de trabajo
 
-### 5.1 Separa y fija las dependencias
+### 5.1 Separa y fija las dependencias — ⏳ Pendiente
 
 **Dónde:** `requirements.txt`.
 
@@ -763,9 +761,9 @@ torch==2.x.x+cpu
 
 ---
 
-### 5.2 Normaliza los finales de línea
+### 5.2 Normaliza los finales de línea — ⏳ Pendiente
 
-El repositorio mezcla archivos con finales de línea **CRLF** (Windows) y **LF** (Unix). Por ejemplo, `base.html` usa CRLF y `dropzone.html` usa LF. Por eso Git muestra avisos y algunos *diffs* parecen cambiar el archivo entero.
+El repositorio mezcla archivos con finales de línea **CRLF** (Windows) y **LF** (Unix). Git muestra avisos del tipo *"LF will be replaced by CRLF"* y algunos *diffs* parecen cambiar el archivo entero.
 
 **Cómo arreglarlo:** crea `.gitattributes` en la raíz:
 
@@ -780,7 +778,7 @@ Y luego, una sola vez: `git add --renormalize .` y un commit dedicado ("chore: n
 
 ---
 
-### 5.3 Linter y formateador automático
+### 5.3 Linter y formateador automático — ⏳ Pendiente
 
 Añade [**Ruff**](https://docs.astral.sh/ruff/), que hace de linter y formateador para Python en uno:
 
@@ -799,13 +797,13 @@ ruff check . --fix
 ruff format .
 ```
 
-Habría detectado, por ejemplo, los `except Exception: pass`, los imports sin usar y las *f-strings* en el logging.
+Habría detectado, por ejemplo, los `except Exception: pass`, los imports sin usar y las *f-strings* en el logging. La limpieza de código muerto del 24 nov se hizo a mano con búsquedas; un linter la habría automatizado.
 
 Para el frontend, [Prettier](https://prettier.io/) con `prettier-plugin-tailwindcss` ordena las clases de Tailwind automáticamente, cosa que ayuda mucho en las cadenas largas que tienes.
 
 ---
 
-### 5.4 Integración continua (CI)
+### 5.4 Integración continua (CI) — ⏳ Pendiente
 
 Crea `.github/workflows/tests.yml` para que **cada push ejecute los tests**. Con `MOCK_DEMUCS=true` no necesitas instalar el modelo:
 
@@ -825,17 +823,21 @@ jobs:
       - run: pytest -q
 ```
 
+**Ojo:** `test_audio_service_real_demucs_engine_orchestration` importa `torch`. En CI, instálalo en versión CPU (punto 5.1) o márcalo con `pytest.importorskip("torch")`.
+
 Así el test roto del punto 2.4 no habría llegado a `main`.
 
 ---
 
-### 5.5 Nombres de los tests
+### 5.5 Nombres de los tests — ⏳ Pendiente
 
-`test_phase1_pipeline.py` y `test_phase2_practice_room.py` están nombrados por la **fase del proyecto** en que se escribieron. Dentro de seis meses, "fase 1" no le dirá nada a nadie. Renómbralos por **lo que prueban**: `test_separation_pipeline.py`, `test_practice_page.py`.
+`test_phase1_pipeline.py` y `test_phase2_practice_room.py` están nombrados por la **fase del proyecto** en que se escribieron. Dentro de seis meses, "fase 1" no le dirá nada a nadie. Renómbralos por **lo que prueban**: `test_separation_pipeline.py`, `test_practice_page.py`. El nuevo `test_database.py` ya sigue este criterio.
+
+Lo mismo aplica a `components/demo_sessions.html`: ya no muestra demos, sino "Mis proyectos". Un nombre como `my_projects.html` evitaría confusiones (recuerda cambiar el `include` en `index.html`).
 
 ---
 
-### 5.6 Mensajes de commit
+### 5.6 Mensajes de commit — ⏳ Pendiente
 
 En el historial reciente aparecen commits como `..`, `.` o `add:`. Cuando algo falle y necesites saber **cuándo y por qué** cambió, esos mensajes no te ayudarán.
 
@@ -847,11 +849,11 @@ fix(download): devolver 404 cuando el stem no existe
 chore: normalizar finales de línea
 ```
 
-Un commit = un cambio lógico. Si el mensaje necesita la palabra "y", probablemente son dos commits.
+Un commit = un cambio lógico. Si el mensaje necesita la palabra "y", probablemente son dos commits. Los cambios del 24 nov, por ejemplo, encajan en commits separados: eliminar las demos, limpiar el código muerto, mover la base de datos y deduplicar/eliminar sesiones.
 
 ---
 
-### 5.7 Versión de la app en un solo sitio
+### 5.7 Versión de la app en un solo sitio — ⏳ Pendiente
 
 `app_version = "0.1.0"` está escrito a mano en `config.py:13`. Cuando adoptes `pyproject.toml` (punto 5.3), declara la versión ahí y léela con `importlib.metadata.version("pista-libre")`.
 
@@ -861,51 +863,49 @@ Un commit = un cambio lógico. Si el mensaje necesita la palabra "y", probableme
 
 No son errores de código, sino huecos que como dueño del producto conviene tener en el radar.
 
-### 6.1 Nadie borra nada: el disco crece sin límite
+### 6.1 El disco crece sin límite — 🟨 Parcial
 
-Cada canción subida genera una carpeta con el original y 4 MP3 (unos 20–40 MB). No existe forma de borrar una sala ni una limpieza automática. En un uso normal, el disco se llena en semanas.
+Cada canción subida genera una carpeta con el original y 4 MP3 (unos 30 MB).
 
-**Recomendación:**
+**✅ Hecho:**
 
-- Un botón **"Eliminar sala"** en el panel lateral (`DELETE /api/sessions/{id}` que borre la carpeta y el registro).
-- Una **política de retención**: por ejemplo, borrar al arrancar las sesiones en estado `error` o `pending` con más de 24 h, y las `ready` no abiertas en 30 días. Para lo segundo te falta una columna `last_opened_at` (ver migraciones en 3.8).
+- **Eliminar proyecto:** botón de papelera en cada tarjeta de "Mis proyectos" y `DELETE /api/sessions/{id}` (`204`/`404`). Borra primero la carpeta y luego el registro; si Windows bloquea un archivo, el registro no se pierde.
+- **Sin duplicados:** subir dos veces la misma canción ya no ocupa el doble (ver "Estado" arriba).
 
-### 6.2 Sesiones atascadas en `processing`
+**⏳ Pendiente: política de retención.** Por ejemplo, borrar al arrancar las sesiones en estado `error` o `pending` con más de 24 h. Para borrar también las `ready` que no se abren en 30 días hace falta una columna `last_opened_at`; añádela como migración v3 en `MIGRATIONS` (punto 3.8).
+
+### 6.2 Sesiones atascadas en `processing` — ⏳ Pendiente
 
 Si el servidor se reinicia o se cae a mitad de una separación, esa sesión queda en `processing` para siempre. Al arrancar (en el `lifespan` del punto 3.1), marca como `error` toda sesión `processing`, para que el usuario pueda reintentar.
 
-### 6.3 Duración real de las canciones del usuario
+### 6.3 Duración real de las canciones del usuario — ✅ Resuelto
 
-En `main.py:151` la duración de las sesiones de usuario es `"--:--"` y el BPM es siempre `120`. El reproductor la corrige en cuanto carga el audio, pero el BPM falso se muestra tal cual. Opciones:
+- **Duración:** `AudioService` la calcula al terminar Demucs (`sources["vocals"].shape[-1] / samplerate`) y la guarda en `duration_seconds`, la migración v2. `/practice` la muestra como `M:SS`. Las sesiones anteriores y las del modo simulado muestran `--:--` hasta que el reproductor carga el audio.
+- **BPM:** ya no se muestra un BPM inventado; el badge se quitó de la interfaz.
 
-- **Duración:** calcúlala al terminar Demucs (`sources["vocals"].shape[-1] / separator.samplerate`) y guárdala en SQLite.
-- **BPM:** si no lo conoces, **no lo muestres**. Es mejor no mostrar nada que mostrar un dato inventado. La plantilla ya oculta el badge con `{% if song_info.bpm %}`; basta con pasar `None`.
+### 6.4 Derechos de autor en las demos — ✅ Resuelto
 
-### 6.4 Derechos de autor en las demos
-
-Las demos usan canciones y portadas comerciales (Hillsong United, Jesús Adrián Romero, Michael Jackson). Para uso personal y local no hay problema, pero **si publicas la app**, distribuir stems y portadas de esas canciones puede generarte reclamaciones. Antes de cualquier lanzamiento público, cambia las demos por música con licencia libre (Creative Commons, como [ccMixter](https://ccmixter.org/) o [Free Music Archive](https://freemusicarchive.org/)) o por material propio.
+Se eliminaron las demos con canciones y portadas comerciales. Si en el futuro quieres sesiones de ejemplo, usa música con licencia libre (Creative Commons, como [ccMixter](https://ccmixter.org/) o [Free Music Archive](https://freemusicarchive.org/)) o material propio.
 
 ---
 
-## Orden sugerido de trabajo
-
-Si tuviera que planificarlo en *sprints* cortos:
+## Orden sugerido de trabajo (lo pendiente)
 
 | # | Bloque | Puntos | Esfuerzo aprox. |
 |---|---|---|---|
-| 1 | **Seguridad mínima** | 1.1 (opción rápida), 1.2, 1.3, 1.4, 1.5 | ½ día |
-| 2 | **Tests en verde + CI** | 2.4, 5.4 | 2 horas |
+| 1 | **Tests en verde + CI** | 2.4, 5.4 | 1 hora |
+| 2 | **Seguridad mínima restante** | 1.3, 1.4, 1.5, 1.1 (opción correcta) | ½ día |
 | 3 | **Descargas honestas** | 2.3, 3.9 | 2 horas |
 | 4 | **Separación asíncrona** | 2.1, 2.2, 6.2 | 1–2 días |
-| 5 | **Rendimiento backend** | 3.1, 3.5, 3.6 | ½ día |
-| 6 | **Rendimiento frontend** | 4.1, 4.5 (quitar htmx) | ½ día |
-| 7 | **Refactor sin cambios visibles** | 3.2, 3.3, 4.2, 4.3 | 1–2 días |
+| 5 | **Rendimiento backend** | 3.1, 3.5, 3.6, 3.8 (WAL) | ½ día |
+| 6 | **Rendimiento frontend** | 4.1, 4.5 (SRI) | ½ día |
+| 7 | **Refactor sin cambios visibles** | 3.2, 3.3, 3.7, 4.2, 4.3 | 1 día |
 | 8 | **Herramientas** | 5.1, 5.2, 5.3 | ½ día |
 | 9 | **Tailwind compilado** | 4.4 | ½ día |
-| 10 | **Producto** | 6.1, 6.3, 4.7 | según prioridad |
+| 10 | **Producto** | 2.6, 6.1 (retención), 4.7 | según prioridad |
 
-**Regla de oro durante todo el proceso:** antes de cada bloque, `pytest` en verde; después de cada bloque, `pytest` en verde y una prueba manual rápida (subir una canción, separarla, ensayar y descargar). Si algo se rompe, el commit es pequeño y sabrás exactamente qué lo causó.
+**Regla de oro durante todo el proceso:** antes de cada bloque, `pytest` en verde; después de cada bloque, `pytest` en verde y una prueba manual rápida (subir una canción, separarla, ensayar, descargar y eliminar). Si algo se rompe, el commit es pequeño y sabrás exactamente qué lo causó.
 
 ---
 
-*Revisión preparada el 23 de noviembre de 2026.*
+*Revisión preparada el 23 de noviembre de 2026. Actualizada el 24 de noviembre de 2026.*

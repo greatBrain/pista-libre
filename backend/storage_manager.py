@@ -7,6 +7,9 @@ Responsabilidad:
 - Auto-reconciliar el estado cuando el usuario elimina carpetas manualmente en /storage (Self-Healing).
 """
 import hashlib
+import logging
+import os
+import re
 import shutil
 import uuid
 from pathlib import Path
@@ -16,6 +19,46 @@ from fastapi import UploadFile
 from backend.config import settings
 from backend.repository import SessionRepository
 from backend.schemas import SessionResponse, SessionStatus, StemsInfo
+
+logger = logging.getLogger(__name__)
+
+# Los IDs de sesión son siempre UUID v4 generados por create_session (forma canónica en minúsculas)
+_SESSION_ID_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+_DB_FILENAME = "pista_libre.db"
+_SQLITE_SIDECAR_SUFFIXES = ("", "-journal", "-wal", "-shm")
+
+
+def _resolve_default_db_path() -> Path:
+    """Ruta de la base de datos de la app, fuera de la carpeta pública /storage.
+
+    Migración única: versiones anteriores guardaban la base dentro de storage_dir,
+    que se sirve como estático (GET /storage/pista_libre.db la descargaba completa).
+    Si existe esa base antigua y aún no la nueva, se mueve a data_dir.
+    """
+    target = settings.db_path
+    legacy = settings.storage_dir / _DB_FILENAME
+    if not legacy.is_file():
+        return target
+    if target.exists():
+        logger.warning(
+            "Existen dos bases de datos: se usa %s y se ignora la antigua %s, "
+            "que sigue siendo pública. Revísala y elimínala manualmente.",
+            target, legacy,
+        )
+        return target
+
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        for suffix in _SQLITE_SIDECAR_SUFFIXES:
+            src = legacy.with_name(legacy.name + suffix)
+            if src.is_file():
+                os.replace(src, target.with_name(target.name + suffix))
+        logger.info("Base de datos movida de %s a %s (fuera de la carpeta pública).", legacy, target)
+        return target
+    except OSError as exc:
+        # No perder los datos: se sigue usando la base antigua y se reintenta en el próximo arranque
+        logger.warning("No se pudo mover la base de datos a %s (%s); se usa %s.", target, exc, legacy)
+        return legacy
 
 
 # ============================================================================
@@ -68,7 +111,15 @@ class StorageManager:
     ) -> None:
         self.storage_dir: Path = storage_dir or settings.storage_dir
         self.storage_dir.mkdir(parents=True, exist_ok=True)
-        resolved_db_path = db_path or (self.storage_dir / "pista_libre.db")
+        if db_path is not None:
+            resolved_db_path = db_path
+        elif storage_dir is None:
+            # Configuración de la app: la base vive en data_dir, nunca en la carpeta pública
+            resolved_db_path = _resolve_default_db_path()
+        else:
+            # storage_dir personalizado (tests/herramientas): base aislada junto a ese directorio,
+            # que la app no sirve como estático
+            resolved_db_path = self.storage_dir / _DB_FILENAME
         self.repository = SessionRepository(db_path=resolved_db_path)
         self._index_existing_disk_sessions()
 
@@ -92,6 +143,14 @@ class StorageManager:
             if candidate.is_file():
                 return candidate
         return None
+
+    def has_complete_stems(self, session_id: str) -> bool:
+        """Indica si la carpeta de la sesión contiene físicamente los 4 stems."""
+        stems_dir = self.storage_dir / session_id / "stems"
+        try:
+            return stems_dir.is_dir() and all((stems_dir / s).is_file() for s in self.EXPECTED_STEMS)
+        except OSError:
+            return False
 
     def _index_existing_disk_sessions(self) -> None:
         """Reconcilia e indexa carpetas preexistentes en /storage que tengan stems completos pero no hash en SQLite."""
@@ -270,6 +329,7 @@ class StorageManager:
         status: SessionStatus,
         stems: Optional[StemsInfo] = None,
         error_message: Optional[str] = None,
+        duration_seconds: Optional[float] = None,
     ) -> SessionResponse:
         """Actualiza el estado de la sesión en SQLite de forma atómica."""
         self.get_session(session_id)
@@ -278,14 +338,45 @@ class StorageManager:
             status=status,
             stems=stems,
             error_message=error_message,
+            duration_seconds=duration_seconds,
         )
         if updated is None:
             raise SessionNotFoundError(f"Sesión no encontrada: {session_id}")
         return updated
 
-    def try_reuse_cached_stems(self, session_id: str) -> Optional[SessionResponse]:
-        """Verifica si otra sesión ya separó un archivo con el mismo hash SHA-256.
-        Si existe en disco, clona sus 4 stems instantáneamente evitando re-ejecutar Demucs.
+    def delete_session(self, session_id: str) -> None:
+        """Elimina una sesión por completo: su carpeta en disco y su registro en SQLite.
+
+        Seguridad: solo acepta IDs con forma de UUID y que existan en la base de datos,
+        de modo que nunca se borra una ruta arbitraria fuera de storage_dir.
+        Orden: primero el disco y luego SQLite. Si el borrado físico falla (p. ej. un archivo
+        bloqueado en Windows), el registro se conserva y la sesión sigue siendo coherente.
+        """
+        if not _SESSION_ID_PATTERN.fullmatch(session_id or ""):
+            raise SessionNotFoundError(f"Sesión no encontrada: {session_id}")
+        if self.repository.get(session_id) is None:
+            raise SessionNotFoundError(f"Sesión no encontrada: {session_id}")
+
+        session_dir = self.storage_dir / session_id
+        if session_dir.resolve().parent != self.storage_dir.resolve():
+            raise SessionNotFoundError(f"Sesión no encontrada: {session_id}")
+
+        if session_dir.exists():
+            try:
+                shutil.rmtree(session_dir)
+            except OSError as exc:
+                raise StorageError(f"No se pudo eliminar la carpeta de la sesión: {exc}") from exc
+        self.repository.delete(session_id)
+
+    def reuse_existing_session(self, session_id: str) -> Optional[SessionResponse]:
+        """Deduplicación por SHA-256: si otra sesión READY ya separó exactamente el mismo audio,
+        se devuelve ESA sesión y se descarta la recién subida (carpeta y registro).
+
+        Así no se re-ejecuta Demucs, no se duplican ~30 MB de stems en disco y la canción
+        aparece una sola vez en "Mis proyectos". La sesión reutilizada se marca como la más
+        reciente para que suba al principio de la lista.
+
+        Retorna None si no hay ninguna sesión equivalente con sus 4 stems en disco.
         """
         self._index_existing_disk_sessions()
         file_hash = self.repository.get_file_hash(session_id)
@@ -304,27 +395,24 @@ class StorageManager:
         if not candidate_ids:
             return None
 
-        target_stems_dir = self.storage_dir / session_id / "stems"
         for donor_id in candidate_ids:
-            donor_stems_dir = self.storage_dir / donor_id / "stems"
             try:
-                if not donor_stems_dir.is_dir():
+                if not (self.storage_dir / donor_id).is_dir():
                     self.repository.delete(donor_id)
                     continue
-                if not all((donor_stems_dir / s).is_file() for s in self.EXPECTED_STEMS):
-                    continue
-
-                target_stems_dir.mkdir(parents=True, exist_ok=True)
-                for stem_name in self.EXPECTED_STEMS:
-                    shutil.copy2(donor_stems_dir / stem_name, target_stems_dir / stem_name)
-
-                return self.update_session(
-                    session_id=session_id,
-                    status=SessionStatus.READY,
-                    stems=StemsInfo.for_session(session_id),
-                )
             except OSError:
                 continue
+            if not self.has_complete_stems(donor_id):
+                continue
+
+            # Actualizar la existente (updated_at) la coloca primera en "Mis proyectos"
+            donor = self.update_session(donor_id, status=SessionStatus.READY)
+            try:
+                self.delete_session(session_id)
+            except StorageError as exc:
+                # El duplicado queda en estado PENDING: nunca se lista ni se reutiliza
+                logger.warning("No se pudo descartar la sesión duplicada %s: %s", session_id, exc)
+            return donor
 
         return None
 
@@ -340,15 +428,7 @@ class StorageManager:
 
         valid_sessions: list[SessionResponse] = []
         for session in candidates:
-            stems_dir = self.storage_dir / session.session_id / "stems"
-            try:
-                has_all_stems = stems_dir.is_dir() and all(
-                    (stems_dir / stem).is_file() for stem in self.EXPECTED_STEMS
-                )
-            except OSError:
-                has_all_stems = False
-
-            if not has_all_stems:
+            if not self.has_complete_stems(session.session_id):
                 try:
                     self.repository.delete(session.session_id)
                 except Exception:

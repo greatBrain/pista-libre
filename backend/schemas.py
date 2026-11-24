@@ -42,4 +42,5 @@ class SessionResponse(BaseModel):
     status: SessionStatus = SessionStatus.PENDING
     stems: StemsInfo = Field(default_factory=StemsInfo)
     error_message: Optional[str] = None
+    duration_seconds: Optional[float] = None
 

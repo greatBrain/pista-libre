@@ -149,6 +149,9 @@ def test_audio_service_real_demucs_engine_orchestration(
 
     assert mock_get_sep.called
     assert updated.status == SessionStatus.READY
+    # 4410 muestras a 44100 Hz = 0.1 s, persistido en SQLite
+    assert updated.duration_seconds == pytest.approx(0.1)
+    assert storage.get_session(session.session_id).duration_seconds == pytest.approx(0.1)
     for stem_name in ["vocals.mp3", "drums.mp3", "bass.mp3", "other.mp3"]:
         stem_file = tmp_path / session.session_id / "stems" / stem_name
         assert stem_file.is_file()

@@ -138,6 +138,9 @@
                     const errData = await sepResponse.json().catch(() => ({ detail: 'Error en la separación' }));
                     throw new Error(errData.detail || 'No se pudieron separar las pistas');
                 }
+                // Si el audio ya existía, el servidor devuelve la sesión original (otro session_id)
+                const separated = await sepResponse.json();
+                this.sessionId = separated.session_id;
 
                 this.processingProgress = 100;
                 this.processingStep = '¡Separación completada con éxito!';
@@ -151,11 +154,8 @@
         }
     }" class="w-full flex flex-col lg:flex-row min-h-[calc(100vh-4rem)]">
 
-    <!-- 1. PANEL LATERAL IZQUIERDO: fondo oscuro tipo estudio para diferenciarlo del contenido -->
-    <aside
-        class="w-full lg:w-96 xl:w-[400px] 2xl:w-[440px] lg:shrink-0 bg-slate-900 border-b lg:border-b-0 lg:border-r border-slate-700/50 p-3.5 sm:p-4 lg:p-5 xl:p-6 flex flex-col justify-start lg:min-h-[calc(100vh-4rem)] lg:sticky lg:top-0 lg:self-start overflow-hidden lg:overflow-y-auto">
-        {% include "components/demo_sessions.html" %}
-    </aside>        
+    <!-- 1. PANEL LATERAL IZQUIERDO: Mis proyectos (componente compartido con la sala de ensayo) -->
+    {% include "components/demo_sessions.html" %}
 
     <!-- 2. CONTENEDOR PRINCIPAL: TOTALMENTE CENTRADO (Dropzone, Pistas y Botón de Acción) -->
     <div class="flex-1 min-w-0 px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6 xl:px-12 xl:py-8 flex flex-col items-center justify-center">                

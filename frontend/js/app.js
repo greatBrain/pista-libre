@@ -61,6 +61,7 @@ window.practiceRoom = function () {
         totalDurationSeconds: initialDuration,
         playbackProgress: 0,
         masterVolume: 85,
+        waveformBox: null, // { left, width } del waveform en px, relativo a x-ref="tracksArea"
         tracks: {
             vocals: { muted: false, solo: false, volume: 80 },
             drums: { muted: false, solo: false, volume: 75 },
@@ -89,6 +90,34 @@ window.practiceRoom = function () {
             // Liberar recursos de audio al salir de la sala
             this._unloadHandler = () => this.cleanupAudio();
             window.addEventListener("pagehide", this._unloadHandler);
+
+            // El cabezal sigue al waveform real aunque cambie el ancho disponible
+            // (panel lateral, ventana redimensionada o cambio de breakpoint)
+            this.$nextTick(() => this.measureWaveform());
+            if (typeof ResizeObserver !== "undefined" && this.$refs.tracksArea) {
+                this._resizeObserver = new ResizeObserver(() => this.measureWaveform());
+                this._resizeObserver.observe(this.$refs.tracksArea);
+            }
+        },
+
+        measureWaveform() {
+            const area = this.$refs.tracksArea;
+            const wave = area ? area.querySelector("[data-waveform]") : null;
+            if (!area || !wave) {
+                this.waveformBox = null;
+                return;
+            }
+            const areaRect = area.getBoundingClientRect();
+            const waveRect = wave.getBoundingClientRect();
+            this.waveformBox = waveRect.width > 0
+                ? { left: waveRect.left - areaRect.left, width: waveRect.width }
+                : null;
+        },
+
+        get playheadStyle() {
+            if (!this.waveformBox) return "display: none";
+            const { left, width } = this.waveformBox;
+            return `left: ${left + (this.playbackProgress / 100) * width}px`;
         },
 
         initHowlerEngine() {
@@ -302,6 +331,10 @@ window.practiceRoom = function () {
 
         cleanupAudio() {
             this.stopTimer();
+            if (this._resizeObserver) {
+                this._resizeObserver.disconnect();
+                this._resizeObserver = null;
+            }
             STEM_KEYS.forEach((key) => {
                 if (this.howls[key]) {
                     this.howls[key].stop();

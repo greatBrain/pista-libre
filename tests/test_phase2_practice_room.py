@@ -25,13 +25,13 @@ from backend.audio_service import AudioService
 from backend.config import settings
 from backend.main import app
 from backend.schemas import SessionStatus
-from backend.storage_manager import StorageManager
+from backend.storage_manager import SessionNotFoundError, StorageManager
 
 VALID_MP3_BYTES = b"ID3\x04\x00\x00\x00\x00\x00\x00Pista Libre Phase 2 Stem"
 
 
-def _make_upload(filename: str) -> UploadFile:
-    return UploadFile(filename=filename, file=io.BytesIO(VALID_MP3_BYTES))
+def _make_upload(filename: str, content: bytes = VALID_MP3_BYTES) -> UploadFile:
+    return UploadFile(filename=filename, file=io.BytesIO(content))
 
 
 # ============================================================================
@@ -61,9 +61,12 @@ def test_list_ready_sessions_filters_incomplete_and_sorts_newest_first(
 
     time.sleep(0.05)
 
-    # 4. Segunda sesión READY completa (más reciente)
+    # 4. Segunda sesión READY completa (más reciente). Contenido distinto: con el mismo
+    # audio se deduplicaría contra la primera (ver test de caché SHA-256).
     ready_new = storage.create_session("ensayo_reciente.mp3")
-    storage.save_upload_file(ready_new.session_id, _make_upload("ensayo_reciente.mp3"))
+    storage.save_upload_file(
+        ready_new.session_id, _make_upload("ensayo_reciente.mp3", VALID_MP3_BYTES + b" otra toma")
+    )
     audio_service.separate_tracks(ready_new.session_id)
 
     sessions = storage.list_ready_sessions()
@@ -142,6 +145,39 @@ def test_practice_room_hydrates_real_stems_json_for_user_session(client: TestCli
     assert song_config["stems"]["drums"] == f"/storage/{session_id}/stems/drums.mp3"
 
 
+def test_practice_room_shows_projects_sidebar_and_marks_open_session(client: TestClient) -> None:
+    """La sala incluye el panel "Mis proyectos" para cambiar de sesión sin volver al inicio."""
+    ids = []
+    for name, content in (("tema_uno.mp3", VALID_MP3_BYTES), ("tema_dos.mp3", VALID_MP3_BYTES + b" dos")):
+        up = client.post("/api/sessions/upload", files={"file": (name, content, "audio/mpeg")})
+        sep = client.post(f"/api/sessions/{up.json()['session_id']}/separate")
+        ids.append(sep.json()["session_id"])
+    first_id, second_id = ids
+
+    html = client.get(f"/practice?session={first_id}").text
+    assert 'aria-label="Mis proyectos"' in html
+    assert f'href="/practice?session={second_id}"' in html  # se puede saltar a la otra sesión
+    assert html.count('aria-current="page"') == 1
+    active_link = html.split('aria-current="page"')[0].rsplit("<a ", 1)[1]
+    assert f"/practice?session={first_id}" in active_link
+
+    # Inicio y sala vacía: mismo panel, sin sesión marcada
+    for url in ("/", "/practice"):
+        page = client.get(url).text
+        assert 'aria-label="Mis proyectos"' in page
+        assert f"/practice?session={first_id}" in page
+        assert 'aria-current="page"' not in page
+
+
+def test_practice_without_session_has_no_placeholder_heading(client: TestClient) -> None:
+    """Sin ?session= la sala no inventa un encabezado ("Sesión de Ensayo")."""
+    res = client.get("/practice")
+    assert res.status_code == 200
+    assert "Sesión de Ensayo" not in res.text
+    assert "<h1" not in res.text
+    assert "<title>Pista Libre</title>" in res.text
+
+
 def test_static_demo_sessions_are_gone(client: TestClient) -> None:
     """Las sesiones demo estáticas fueron retiradas: ni API, ni portadas, ni sala por ?demo=."""
     assert client.get("/api/demos").status_code == 404
@@ -154,10 +190,11 @@ def test_static_demo_sessions_are_gone(client: TestClient) -> None:
     assert "/storage/demos/" not in res.text
 
 
-def test_sha256_cache_reuses_stems_without_rerunning_demucs(
+def test_sha256_cache_reuses_existing_session_without_rerunning_demucs(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Verifica que subir el mismo audio dos veces reutilice los stems por SHA-256 sin re-ejecutar Demucs."""
+    """Subir el mismo audio dos veces devuelve la sesión existente: sin Demucs, sin copiar stems
+    y sin dejar la sesión duplicada en disco ni en SQLite."""
     monkeypatch.setattr(settings, "mock_demucs", True)
     storage = StorageManager(storage_dir=tmp_path)
     audio_service = AudioService(storage_manager=storage)
@@ -179,8 +216,15 @@ def test_sha256_cache_reuses_stems_without_rerunning_demucs(
 
     reused = audio_service.separate_tracks(second.session_id)
     assert reused.status == SessionStatus.READY
+    assert reused.session_id == first.session_id
     for stem in ("vocals.mp3", "drums.mp3", "bass.mp3", "other.mp3"):
-        assert (tmp_path / second.session_id / "stems" / stem).is_file()
+        assert (tmp_path / first.session_id / "stems" / stem).is_file()
+
+    # El duplicado se descarta por completo
+    assert not (tmp_path / second.session_id).exists()
+    with pytest.raises(SessionNotFoundError):
+        storage.get_session(second.session_id)
+    assert [s.session_id for s in storage.list_ready_sessions()] == [first.session_id]
 
 
 def test_manual_deletion_of_storage_directories_self_heals_without_500(
@@ -237,7 +281,9 @@ def test_storage_auto_indexes_preexisting_disk_sessions_for_sha256_cache(
 
     reused = audio_service.separate_tracks(new_session.session_id)
     assert reused.status == SessionStatus.READY
+    assert reused.session_id == legacy_id
     for stem in ("vocals.mp3", "drums.mp3", "bass.mp3", "other.mp3"):
-        assert (tmp_path / new_session.session_id / "stems" / stem).is_file()
+        assert (stems_dir / stem).is_file()
+    assert not (tmp_path / new_session.session_id).exists()
 
 

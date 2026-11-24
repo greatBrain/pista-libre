@@ -20,7 +20,7 @@
   {% set left_bar = 'bg-slate-600' %}
 {% endif %}
 
-<div class="relative bg-slate-50/95 hover:bg-white border border-slate-300/85 dark:bg-slate-800/60 dark:hover:bg-slate-800 dark:border-slate-700 hover:border-blue-400/55 rounded-xl p-3.5 sm:p-4 lg:py-4 lg:px-5 xl:px-6 flex flex-col md:flex-row md:items-center justify-between gap-3.5 md:gap-5 lg:gap-6 overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition-all duration-150 sm:min-h-[100px] md:min-h-[124px] lg:min-h-[132px] xl:min-h-[138px]"
+<div class="relative bg-slate-100/85 hover:bg-white border border-slate-400/50 dark:bg-slate-800/60 dark:hover:bg-slate-800 dark:border-slate-700 hover:border-blue-400/55 rounded-xl p-3.5 sm:p-4 lg:py-4 lg:px-5 xl:px-6 flex flex-col md:flex-row md:items-center justify-between gap-3.5 md:gap-5 lg:gap-6 overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition-all duration-150 sm:min-h-[100px] md:min-h-[124px] lg:min-h-[132px] xl:min-h-[138px]"
     :class="{'opacity-45 grayscale-[20%]': isTrackDimmed('{{ key }}')}">
 
     <!-- Acento lateral de color de stem: barra fina integrada -->
@@ -56,10 +56,11 @@
     </div>
 
     <!-- Representación de Waveform Dinámico Proporcional (Click-to-seek activo) -->
-    <div @click="seekFromWaveform($event)" title="Haz clic para saltar a esta posición"
-        class="flex-1 h-10 sm:h-11 lg:h-12 flex items-center justify-center px-2.5 sm:px-3.5 lg:px-4 rounded-lg bg-slate-100/90 border border-slate-200/80 dark:bg-slate-900/60 dark:border-slate-700 cursor-pointer">
+    {# min-w-0: permite que el waveform ceda espacio a los controles cuando el área es estrecha (p. ej. con el panel lateral) #}
+    <div @click="seekFromWaveform($event)" title="Haz clic para saltar a esta posición" data-waveform
+        class="flex-1 min-w-0 h-10 sm:h-11 lg:h-12 flex items-center justify-center px-2.5 sm:px-3.5 lg:px-4 rounded-lg bg-slate-100/90 border border-slate-200/80 dark:bg-slate-900/60 dark:border-slate-700 cursor-pointer">
         <div
-            class="w-full flex items-center justify-between gap-[1.5px] sm:gap-[2px] lg:gap-[2.5px] h-8 sm:h-9 lg:h-10 overflow-hidden">
+            class="w-full flex items-center justify-between h-8 sm:h-9 lg:h-10 overflow-hidden">
             {# 98 barras de onda de audio de alta resolución con alturas variadas #}
             {% set heights = [
             20, 35, 55, 80, 45, 95, 60, 30, 85, 70, 40, 25, 65, 90, 75, 45,
@@ -71,7 +72,8 @@
             ] %}
             {% for h in heights %}
             {% set bar_pct = ((loop.index0 / loop.length) * 100) | round(1) %}
-            <span class="w-[2px] sm:w-[2.5px] lg:w-[2.5px] rounded-full transition-opacity duration-75 {{ accent_text }}"
+            {# Barras elásticas (1px – 2.5px) y separación repartida por justify-between: siguen visibles aunque el área se estreche #}
+            <span class="flex-1 min-w-px max-w-[2px] sm:max-w-[2.5px] rounded-full transition-opacity duration-75 {{ accent_text }}"
                 :class="playbackProgress >= {{ bar_pct }} ? 'opacity-100' : 'opacity-30'"
                 style="height: {{ h }}%; background-color: currentColor;"></span>
             {% endfor %}
