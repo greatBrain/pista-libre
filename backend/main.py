@@ -49,9 +49,15 @@ templates = Jinja2Templates(directory=str(settings.templates_dir))
 
 # 4. Montaje de archivos estáticos y almacenamiento de audio
 app.mount(
-    "/static",
-    StaticFiles(directory=settings.frontend_dir),
-    name="static",
+    "/static/css",
+    StaticFiles(directory=settings.frontend_dir / "css"),
+    name="css",
+)
+
+app.mount(
+    "/static/js",
+    StaticFiles(directory=settings.frontend_dir / "js"),
+    name="js"
 )
 
 app.mount(
