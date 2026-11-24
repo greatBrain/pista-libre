@@ -46,17 +46,3 @@ class ExportMixRequest(BaseModel):
     target_instrument: InstrumentType
     format: str = Field(default="mp3", pattern="^(mp3|wav)$")
 
-
-class DemoSession(BaseModel):
-    """Modelo de datos tipado para sesiones de prueba pre-procesadas."""
-    id: str = Field(..., description="Identificador único y slug de URL (ej: solution)")
-    title: str = Field(..., description="Título de la canción")
-    artist: str = Field(..., description="Nombre del artista o agrupación")
-    duration: str = Field(..., description="Duración en formato MM:SS")
-    cover_image_url: str = Field(..., description="URL de la imagen de portada")
-    genre: Optional[str] = Field(default=None, description="Género musical principal")
-    bpm: Optional[int] = Field(default=None, description="Tempo en pulsos por minuto")
-    stems: StemsInfo = Field(default_factory=StemsInfo, description="Rutas a los stems de audio")
-    stems_ready: bool = Field(default=True, description="Indica si la sesión está lista para ensayo")
-    storage_folder: Optional[str] = Field(default=None, description="Nombre de la subcarpeta en storage/demos/")
-

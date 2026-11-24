@@ -101,7 +101,7 @@ class StorageManager:
             return
 
         for entry in entries:
-            if not entry.is_dir() or entry.name == "demos":
+            if not entry.is_dir():
                 continue
             session_id = entry.name
             stems_dir = entry / "stems"

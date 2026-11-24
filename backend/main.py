@@ -17,8 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from backend.config import settings
-from backend.schemas import HealthResponse, DemoSession
-from backend.catalog import get_demo_sessions, get_demo_session, check_demo_stems_exist
+from backend.schemas import HealthResponse
 from backend.api.routes.sessions import router as sessions_router
 from backend.api.deps import get_storage_manager
 from backend.storage_manager import StorageManager, SessionNotFoundError
@@ -72,12 +71,6 @@ app.mount(
     name="storage",
 )
 
-app.mount(
-    "/demos",
-    StaticFiles(directory=settings.storage_dir / "demos", check_dir=False),
-    name="demos",
-)
-
 
 # 5. Endpoint de salud operativo
 @app.get("/health", response_model=HealthResponse, tags=["Sistema"])
@@ -89,15 +82,7 @@ async def health_check() -> HealthResponse:
         version=settings.app_version,
     )
 
-# 6. Catálogo de Sesiones de Demostración (API JSON)
-
-@app.get("/api/demos", response_model=list[DemoSession], tags=["Audio"])
-async def list_demos() -> list[DemoSession]:
-    """Retorna el catálogo completo de sesiones de prueba en formato JSON."""
-    return get_demo_sessions()
-
-
-# 7. Vistas del Frontend servidas por plantillas Jinja2
+# 6. Vistas del Frontend servidas por plantillas Jinja2
 
 @app.get("/", response_class=HTMLResponse, tags=["Frontend"])
 async def serve_home(
@@ -110,7 +95,6 @@ async def serve_home(
         name="index.html",
         context={
             "active_tab": "home",
-            "demo_sessions": get_demo_sessions(),
             "user_sessions": storage.list_ready_sessions(),
         },
     )
@@ -119,27 +103,11 @@ async def serve_home(
 @app.get("/practice", response_class=HTMLResponse, tags=["Frontend"])
 async def serve_practice(
     request: Request,
-    demo: str | None = None,
     session: str | None = None,
     storage: StorageManager = Depends(get_storage_manager),
 ) -> HTMLResponse:
     """Pantalla 2: Sala de ensayo con reproductor multitrack y práctica solista."""
-    demo_session = get_demo_session(demo)
-    if demo_session:
-        real_stems = check_demo_stems_exist(demo)
-        song_info = {
-            "id": demo_session.id,
-            "title": demo_session.title,
-            "artist": demo_session.artist,
-            "duration": demo_session.duration,
-            "cover_image_url": demo_session.cover_image_url,
-            "genre": demo_session.genre,
-            "bpm": demo_session.bpm,
-            "stems": demo_session.stems.model_dump(),
-            "stems_ready": demo_session.stems_ready,
-            "real_stems": real_stems,
-        }
-    elif session:
+    if session:
         try:
             user_session = storage.get_session(session)
             title = Path(user_session.original_filename).stem.replace("_", " ").title()
@@ -195,10 +163,10 @@ async def serve_practice(
             "genre": "Ensayo",
             "bpm": 120,
             "stems": {
-                "vocals": "/storage/demos/solution/vocals.mp3",
-                "drums": "/storage/demos/solution/drums.mp3",
-                "bass": "/storage/demos/solution/bass.mp3",
-                "other": "/storage/demos/solution/other.mp3",
+                "vocals": "",
+                "drums": "",
+                "bass": "",
+                "other": "",
             },
             "stems_ready": True,
             "real_stems": {"vocals": False, "drums": False, "bass": False, "other": False},
@@ -210,7 +178,6 @@ async def serve_practice(
         context={
             "active_tab": "practice",
             "song_info": song_info,
-            "demo_id": demo,
         },
     )
 
@@ -230,10 +197,9 @@ STEM_FILE_MAP = {
 async def download_stem(
     filename: str,
     session: str | None = None,
-    demo: str | None = None,
     storage: StorageManager = Depends(get_storage_manager),
 ) -> Response:
-    """Permite descargar las pistas individuales o el paquete ZIP completo de la sesión o demo."""
+    """Permite descargar las pistas individuales o el paquete ZIP completo de la sesión."""
     valid_files = set(STEM_FILE_MAP.keys()) | {"stems-completos.zip"}
     if filename not in valid_files:
         raise HTTPException(status_code=404, detail="Pista no encontrada.")
@@ -247,13 +213,6 @@ async def download_stem(
                 stems_dir = candidate_dir
         except SessionNotFoundError:
             raise HTTPException(status_code=404, detail="Sesión no encontrada.")
-    elif demo:
-        demo_session = get_demo_session(demo)
-        if not demo_session or not demo_session.storage_folder:
-            raise HTTPException(status_code=404, detail="Sesión demo no encontrada.")
-        candidate_dir = storage.storage_dir / "demos" / demo_session.storage_folder
-        if candidate_dir.is_dir():
-            stems_dir = candidate_dir
 
     # Descarga del paquete completo comprimido (.ZIP)
     if filename == "stems-completos.zip":

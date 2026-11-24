@@ -43,15 +43,6 @@ env/
 # ============================================================================
 backend/storage/*
 !backend/storage/.gitkeep
-!backend/storage/demos/
-
-# Excluir archivos de audio pesados incluso dentro de la carpeta demos
-backend/storage/demos/**/*.mp3
-backend/storage/demos/**/*.wav
-backend/storage/demos/**/*.flac
-backend/storage/demos/**/*.m4a
-backend/storage/demos/**/*.ogg
-backend/storage/demos/**/*.aac
 
 # Pesos de modelos PyTorch / Demucs si se descargaran en el directorio
 *.th

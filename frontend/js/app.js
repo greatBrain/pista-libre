@@ -6,7 +6,7 @@
  *   sobre el grafo Web Audio API gestionado por Howler.js.
  * - Aplicar en tiempo real los estados de mezcla (Mute, Solo, Ganancia por canal y Volumen Máster).
  * - Exponer un estado reactivo limpio para Alpine.js y degradar con elegancia a modo visual
- *   cuando una sala de demostración no tenga archivos físicos en disco.
+ *   cuando una sala de ensayo no tenga archivos físicos en disco.
  */
 
 const STEM_KEYS = ["vocals", "drums", "bass", "other"];

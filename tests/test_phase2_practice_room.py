@@ -7,7 +7,7 @@ Cobertura de riesgos (Regla 9 - Testing):
 2. Pruebas de endpoints críticos de Sala de Ensayo (GET /, GET /practice, GET /download):
    - Garantiza que la vista principal liste dinámicamente las "Salas creadas por mí".
    - Garantiza que la vista /practice hidrate correctamente el contrato JSON (#song-config-data) para Howler.js.
-   - Garantiza que las descargas funcionen tanto para sesiones personalizadas (?session=) como para demos (?demo=).
+   - Garantiza que las descargas funcionen para sesiones personalizadas (?session=).
 """
 import io
 import json
@@ -45,9 +45,6 @@ def test_list_ready_sessions_filters_incomplete_and_sorts_newest_first(
     monkeypatch.setattr(settings, "mock_demucs", True)
     storage = StorageManager(storage_dir=tmp_path)
     audio_service = AudioService(storage_manager=storage)
-
-    # Carpeta demos debe ser ignorada siempre
-    (tmp_path / "demos" / "solution").mkdir(parents=True, exist_ok=True)
 
     # 1. Sesión que se queda en PENDING (no debe aparecer)
     pending_s = storage.create_session("borrador_incompleto.mp3")
@@ -145,21 +142,16 @@ def test_practice_room_hydrates_real_stems_json_for_user_session(client: TestCli
     assert song_config["stems"]["drums"] == f"/storage/{session_id}/stems/drums.mp3"
 
 
-def test_practice_room_and_download_support_demo_sessions(client: TestClient) -> None:
-    # 1. Vista de sala de ensayo demo
-    demo_res = client.get("/practice?demo=solution")
-    assert demo_res.status_code == 200
-    assert "Hillsong United" in demo_res.text
-    assert "/download/stems-completos.zip?demo=solution" in demo_res.text
+def test_static_demo_sessions_are_gone(client: TestClient) -> None:
+    """Las sesiones demo estáticas fueron retiradas: ni API, ni portadas, ni sala por ?demo=."""
+    assert client.get("/api/demos").status_code == 404
+    assert client.get("/demos/solution/Solution-hillsong.webp").status_code == 404
 
-    # 2. Descarga de paquete ZIP de sala demo
-    zip_res = client.get("/download/stems-completos.zip?demo=solution")
-    assert zip_res.status_code == 200
-    with zipfile.ZipFile(io.BytesIO(zip_res.content), "r") as zf:
-        assert set(zf.namelist()) == {"voz.mp3", "bateria.mp3", "bajo.mp3", "otros.mp3"}
-
-    # 3. Demo inexistente retorna 404
-    assert client.get("/download/stems-completos.zip?demo=no-existe").status_code == 404
+    # ?demo= ya no tiene significado: /practice cae en la sala vacía sin rutas a audios demo
+    res = client.get("/practice?demo=solution")
+    assert res.status_code == 200
+    assert "Hillsong United" not in res.text
+    assert "/storage/demos/" not in res.text
 
 
 def test_sha256_cache_reuses_stems_without_rerunning_demucs(

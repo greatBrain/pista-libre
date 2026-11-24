@@ -40,6 +40,5 @@ class Settings(BaseModel):
 
 settings = Settings()
 
-# Asegurar existencia de los directorios de almacenamiento local y demos
+# Asegurar existencia del directorio de almacenamiento local
 settings.storage_dir.mkdir(parents=True, exist_ok=True)
-(settings.storage_dir / "demos").mkdir(parents=True, exist_ok=True)
