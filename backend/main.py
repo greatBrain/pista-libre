@@ -84,6 +84,21 @@ async def health_check() -> HealthResponse:
 
 # 6. Vistas del Frontend servidas por plantillas Jinja2
 
+STEM_NAMES: tuple[str, ...] = ("vocals", "drums", "bass", "other")
+
+
+def _empty_song_info(title: str, duration: str) -> dict:
+    """Contrato de una sala sin audio (sin ?session= o con una sesión inexistente)."""
+    return {
+        "id": "custom",
+        "title": title,
+        "duration": duration,
+        "stems": {name: "" for name in STEM_NAMES},
+        "stems_ready": False,
+        "real_stems": {name: False for name in STEM_NAMES},
+    }
+
+
 @app.get("/", response_class=HTMLResponse, tags=["Frontend"])
 async def serve_home(
     request: Request,
@@ -112,65 +127,21 @@ async def serve_practice(
             user_session = storage.get_session(session)
             title = Path(user_session.original_filename).stem.replace("_", " ").title()
             stems_dir = storage.storage_dir / user_session.session_id / "stems"
-            real_stems = {
-                "vocals": (stems_dir / "vocals.mp3").is_file(),
-                "drums": (stems_dir / "drums.mp3").is_file(),
-                "bass": (stems_dir / "bass.mp3").is_file(),
-                "other": (stems_dir / "other.mp3").is_file(),
-            }
+            original_url = f"/storage/{user_session.session_id}/original.mp3"
+            stem_urls = user_session.stems.model_dump()
+            real_stems = {name: (stems_dir / f"{name}.mp3").is_file() for name in STEM_NAMES}
             song_info = {
                 "id": user_session.session_id,
                 "title": title,
-                "artist": "Grabación de Ensayo",
                 "duration": "--:--",
-                "cover_image_url": "",
-                "genre": "Sesión Personalizada",
-                "bpm": 120,
-                "stems": {
-                    "vocals": user_session.stems.vocals or f"/storage/{user_session.session_id}/original.mp3",
-                    "drums": user_session.stems.drums or f"/storage/{user_session.session_id}/original.mp3",
-                    "bass": user_session.stems.bass or f"/storage/{user_session.session_id}/original.mp3",
-                    "other": user_session.stems.other or f"/storage/{user_session.session_id}/original.mp3",
-                },
+                "stems": {name: stem_urls[name] or original_url for name in STEM_NAMES},
                 "stems_ready": all(real_stems.values()),
                 "real_stems": real_stems,
             }
         except (SessionNotFoundError, OSError):
-            song_info = {
-                "id": "custom",
-                "title": "Sesión no encontrada",
-                "artist": "Desconocido",
-                "duration": "0:00",
-                "cover_image_url": "",
-                "genre": "Ensayo",
-                "bpm": 120,
-                "stems": {
-                    "vocals": "",
-                    "drums": "",
-                    "bass": "",
-                    "other": "",
-                },
-                "stems_ready": False,
-                "real_stems": {"vocals": False, "drums": False, "bass": False, "other": False},
-            }
+            song_info = _empty_song_info(title="Sesión no encontrada", duration="0:00")
     else:
-        song_info = {
-            "id": "custom",
-            "title": "Sesión de Ensayo",
-            "artist": "Canción personalizada",
-            "duration": "3:45",
-            "cover_image_url": "",
-            "genre": "Ensayo",
-            "bpm": 120,
-            "stems": {
-                "vocals": "",
-                "drums": "",
-                "bass": "",
-                "other": "",
-            },
-            "stems_ready": True,
-            "real_stems": {"vocals": False, "drums": False, "bass": False, "other": False},
-        }
+        song_info = _empty_song_info(title="Sesión de Ensayo", duration="3:45")
 
     return templates.TemplateResponse(
         request=request,

@@ -118,12 +118,7 @@ class StorageManager:
                     continue
 
                 file_hash = self._compute_file_sha256(original_file)
-                stems_info = StemsInfo(
-                    vocals=f"/storage/{session_id}/stems/vocals.mp3",
-                    drums=f"/storage/{session_id}/stems/drums.mp3",
-                    bass=f"/storage/{session_id}/stems/bass.mp3",
-                    other=f"/storage/{session_id}/stems/other.mp3",
-                )
+                stems_info = StemsInfo.for_session(session_id)
                 if existing is None:
                     self.repository.create(
                         SessionResponse(
@@ -323,16 +318,10 @@ class StorageManager:
                 for stem_name in self.EXPECTED_STEMS:
                     shutil.copy2(donor_stems_dir / stem_name, target_stems_dir / stem_name)
 
-                stems_info = StemsInfo(
-                    vocals=f"/storage/{session_id}/stems/vocals.mp3",
-                    drums=f"/storage/{session_id}/stems/drums.mp3",
-                    bass=f"/storage/{session_id}/stems/bass.mp3",
-                    other=f"/storage/{session_id}/stems/other.mp3",
-                )
                 return self.update_session(
                     session_id=session_id,
                     status=SessionStatus.READY,
-                    stems=stems_info,
+                    stems=StemsInfo.for_session(session_id),
                 )
             except OSError:
                 continue

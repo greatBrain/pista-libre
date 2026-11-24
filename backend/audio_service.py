@@ -72,16 +72,10 @@ class AudioService:
             else:
                 self._run_demucs_engine(input_audio, stems_dir)
 
-            stems_info = StemsInfo(
-                vocals=f"/storage/{session_id}/stems/vocals.mp3",
-                drums=f"/storage/{session_id}/stems/drums.mp3",
-                bass=f"/storage/{session_id}/stems/bass.mp3",
-                other=f"/storage/{session_id}/stems/other.mp3",
-            )
             updated_session = self.storage.update_session(
                 session_id,
                 status=SessionStatus.READY,
-                stems=stems_info,
+                stems=StemsInfo.for_session(session_id),
             )
             logger.info(f"Separación completada exitosamente para la sesión {session_id}")
             return updated_session

@@ -12,13 +12,6 @@ class HealthResponse(BaseModel):
     version: str = Field(..., examples=["0.1.0"])
 
 
-class InstrumentType(str, Enum):
-    DRUMS = "drums"
-    BASS = "bass"
-    VOCALS = "vocals"
-    OTHER = "other"
-
-
 class SessionStatus(str, Enum):
     PENDING = "pending"
     PROCESSING = "processing"
@@ -32,6 +25,16 @@ class StemsInfo(BaseModel):
     vocals: Optional[str] = None
     other: Optional[str] = None
 
+    @classmethod
+    def for_session(cls, session_id: str) -> "StemsInfo":
+        """Rutas públicas estándar de los 4 stems separados de una sesión."""
+        return cls(
+            vocals=f"/storage/{session_id}/stems/vocals.mp3",
+            drums=f"/storage/{session_id}/stems/drums.mp3",
+            bass=f"/storage/{session_id}/stems/bass.mp3",
+            other=f"/storage/{session_id}/stems/other.mp3",
+        )
+
 
 class SessionResponse(BaseModel):
     session_id: str
@@ -39,10 +42,4 @@ class SessionResponse(BaseModel):
     status: SessionStatus = SessionStatus.PENDING
     stems: StemsInfo = Field(default_factory=StemsInfo)
     error_message: Optional[str] = None
-
-
-class ExportMixRequest(BaseModel):
-    session_id: str
-    target_instrument: InstrumentType
-    format: str = Field(default="mp3", pattern="^(mp3|wav)$")
 

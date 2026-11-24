@@ -32,17 +32,13 @@ function formatSecondsToMMSS(totalSeconds) {
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 }
 
-window.practiceRoom = function (passedConfig = null) {
-    let songConfig = passedConfig;
-    if (!songConfig || Object.keys(songConfig).length === 0) {
-        const dataEl = document.getElementById("song-config-data");
-        if (dataEl && dataEl.textContent) {
-            try {
-                songConfig = JSON.parse(dataEl.textContent);
-            } catch (e) {
-                songConfig = {};
-            }
-        } else {
+window.practiceRoom = function () {
+    let songConfig = {};
+    const dataEl = document.getElementById("song-config-data");
+    if (dataEl && dataEl.textContent) {
+        try {
+            songConfig = JSON.parse(dataEl.textContent);
+        } catch (e) {
             songConfig = {};
         }
     }
@@ -183,14 +179,6 @@ window.practiceRoom = function (passedConfig = null) {
             if (this.tracks[key].solo) {
                 this.tracks[key].muted = false;
             }
-            this.applyMixState();
-        },
-
-        resetAllTracks() {
-            STEM_KEYS.forEach((key) => {
-                this.tracks[key].muted = false;
-                this.tracks[key].solo = false;
-            });
             this.applyMixState();
         },
 

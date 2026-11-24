@@ -11,8 +11,7 @@ load_dotenv()
 class Settings(BaseModel):
     app_name: str = "Pista Libre"
     app_version: str = "0.1.0"
-    debug: bool = os.getenv("DEBUG", "true").lower() in {"1", "true", "yes"}
-    
+
     # Rutas absolutas del proyecto (resueltas respecto a este archivo)
     backend_dir: Path = Path(__file__).resolve().parent
     root_dir: Path = backend_dir.parent
@@ -28,7 +27,6 @@ class Settings(BaseModel):
     # Configuración del motor de separación (Real por defecto; configurable vía MOCK_DEMUCS=true)
     mock_demucs: bool = os.getenv("MOCK_DEMUCS", "false").lower() in {"1", "true", "yes"}
     demucs_model: str = os.getenv("DEMUCS_MODEL", "hdemucs_mmi")
-    demucs_timeout_seconds: int = 600  # 10 minutos límite de seguridad
     demucs_segment: int = 24  # Ventana de 24s (minimiza particiones STFT manteniendo caché L3 en CPU)
     demucs_shifts: int = 0  # Sin time-shift aleatorio (0 vs 1 por defecto) para evitar pasadas extra en CPU
     demucs_overlap: float = 0.02  # Crossfade lineal de 0.48s (2% vs 25%) sin inferencia redundante
