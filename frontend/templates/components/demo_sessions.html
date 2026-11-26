@@ -15,13 +15,20 @@
   {% set aside_layout = 'border-b lg:border-b-0 lg:border-r lg:w-96 xl:w-[400px] 2xl:w-[440px] lg:shrink-0 lg:h-[calc(100vh-4rem)] lg:sticky lg:top-0 lg:self-start lg:overflow-y-auto' %}
 {% endif %}
 <aside aria-label="Mis proyectos"
-    class="w-full bg-slate-900 border-slate-700/50 p-3.5 sm:p-4 lg:p-5 xl:p-6 flex flex-col justify-start overflow-hidden {{ aside_layout }}">
+    class="w-full bg-slate-800 dark:bg-slate-900 border-slate-700/60 dark:border-slate-800 p-3.5 sm:p-4 lg:p-5 xl:p-6 flex flex-col justify-start overflow-hidden {{ aside_layout }}">
 <div class="flex flex-col h-full justify-between space-y-3 lg:space-y-4">
     <div id="recientes" x-data="{ open: true }" class="pt-3 mt-2">
         <button type="button" @click="open = !open"
             class="w-full flex items-center justify-between cursor-pointer group text-left focus:outline-none pb-4">
             <h2
-                class="text-lg font-black text-slate-100 group-hover:text-blue-300 transition-colors tracking-tight flex items-center gap-2 uppercase">
+                class="text-lg font-bold text-slate-100 group-hover:text-blue-300 transition-colors tracking-tight flex items-center gap-2.5">
+                <!-- Icono: carpeta con nota musical (archivo de proyectos) -->
+                <svg class="w-8 h-8 text-white shrink-0" fill="none" stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4.38a1.5 1.5 0 0 1 1.06.44L11.5 8h8A1.5 1.5 0 0 1 21 9.5v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z" />
+                    <path d="M13.5 15.6V11l2.5-.8" />
+                    <circle cx="12" cy="15.6" r="1.5" />
+                </svg>
                 <span>Mis proyectos</span>
                 <img src="/assets/img/icons/dropdown-arrow.svg" alt=""
                     class="w-4 h-4 transition-transform duration-200 filter invert opacity-60"
@@ -122,16 +129,28 @@
             {% endfor %}
 
             {% else %}
-            <div class="p-4 rounded-xl bg-[#192847]/85 border border-dashed border-blue-400/35 shadow-[0_1px_0_rgba(147,197,253,0.12)] text-center">
-                <div class="w-8 h-8 rounded-lg bg-[#20335A] border border-blue-400/25 flex items-center justify-center mx-auto mb-2">
-                    <svg class="w-4 h-4 text-blue-300/80" fill="none" stroke="currentColor" stroke-width="1.8"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                    </svg>
-                </div>
-                <p class="text-xs text-slate-200 font-medium">No tienes salas personalizadas aún.</p>
-                <p class="text-[11px] text-slate-400 mt-0.5">Sube una canción para verla aquí</p>
+            <!-- Estado vacío: caja abierta vacía, sin tarjeta, separada del título -->
+            <div class="flex flex-col items-center text-center pt-10 lg:pt-16 pb-6">
+                <svg class="w-36 h-28 lg:w-44 lg:h-36" viewBox="0 0 160 128" fill="none" aria-hidden="true"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Sombra en el suelo -->
+                    <ellipse cx="80" cy="114" rx="50" ry="5" fill="#3b82f6" fill-opacity="0.10" />
+                    <!-- Solapas traseras, abiertas hacia atrás -->
+                    <path d="M40 44 L80 30 L68 12 L26 26 Z" fill="#15213b" stroke="#60a5fa" stroke-opacity="0.6" stroke-width="1.75" />
+                    <path d="M80 30 L120 44 L134 26 L92 12 Z" fill="#15213b" stroke="#60a5fa" stroke-opacity="0.6" stroke-width="1.75" />
+                    <!-- Interior vacío -->
+                    <path d="M40 44 L80 30 L120 44 L80 58 Z" fill="#0b1222" stroke="#60a5fa" stroke-opacity="0.45" stroke-width="1.75" />
+                    <!-- Caras exteriores -->
+                    <path d="M40 44 L80 58 L80 104 L40 90 Z" fill="#192847" stroke="#60a5fa" stroke-width="2" />
+                    <path d="M80 58 L120 44 L120 90 L80 104 Z" fill="#20335A" stroke="#60a5fa" stroke-width="2" />
+                    <!-- Solapas delanteras, abiertas hacia fuera -->
+                    <path d="M40 44 L80 58 L64 70 L22 55 Z" fill="#1e3a6b" stroke="#93c5fd" stroke-width="2" />
+                    <path d="M80 58 L120 44 L138 55 L96 70 Z" fill="#1e3a6b" stroke="#93c5fd" stroke-width="2" />
+                    <!-- Brillo sutil en la arista frontal -->
+                    <path d="M80 74 L80 98" stroke="#93c5fd" stroke-opacity="0.35" stroke-width="1.5" />
+                </svg>
+                <p class="mt-5 text-base font-semibold text-slate-200">No hay proyectos</p>
+                <p class="mt-1 text-sm text-slate-400">Sube una canción para verla aquí</p>
             </div>
             {% endif %}
         </div>
