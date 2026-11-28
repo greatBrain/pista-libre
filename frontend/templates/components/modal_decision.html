@@ -21,17 +21,17 @@
         x-transition:leave="ease-in duration-150"
         x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
         x-transition:leave-end="opacity-0 translate-y-3 sm:scale-[0.98]"
-        class="relative w-full max-w-4xl md:max-w-5xl lg:max-w-6xl min-h-[680px] max-h-[92vh] flex flex-col bg-[#111A2B] rounded-2xl shadow-2xl border border-blue-400/20 overflow-hidden z-10 transition-all my-auto">
+        class="relative w-full max-w-4xl md:max-w-5xl lg:max-w-6xl min-h-[min(680px,92vh)] max-h-[92vh] flex flex-col bg-white dark:bg-[#111A2B] rounded-2xl shadow-2xl border border-slate-200 dark:border-blue-400/20 overflow-hidden z-10 transition-all my-auto">
 
         <!-- Cabecera del Modal -->
-        <div class="px-6 py-5 sm:px-8 sm:py-6 bg-[#0B121E] border-b border-white/10 shrink-0">
+        <div class="px-6 py-5 sm:px-8 sm:py-6 bg-slate-50 dark:bg-[#0B121E] border-b border-slate-200 dark:border-white/10 shrink-0">
             <div class="flex items-center justify-between gap-4">
                 <div class="space-y-1">
-                    <h3 class="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">¡Tus 4 pistas están listas!</h3>
-                    <p class="text-xs sm:text-sm text-slate-400">Descarga cada pista individualmente o entra a ensayar directamente.</p>
+                    <h3 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">¡Tus 4 pistas están listas!</h3>
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Descarga cada pista individualmente o entra a ensayar directamente.</p>
                 </div>
                 <button type="button" @click="showDecisionModal = false"
-                    class="p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-blue-500/10 border border-white/15 hover:border-blue-400/40 transition cursor-pointer shrink-0"
+                    class="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-200/70 border border-slate-300 hover:border-slate-400 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-blue-500/10 dark:border-white/15 dark:hover:border-blue-400/40 transition cursor-pointer shrink-0"
                     title="Cerrar">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -48,8 +48,8 @@
 
                 <!-- 1. VOZ -->
                 <div class="group flex items-center gap-4 p-6 sm:p-7 min-h-[124px] sm:min-h-[136px] rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/90 dark:bg-slate-800/60 dark:hover:bg-slate-800 dark:border-slate-700 hover:border-blue-400/60 transition-colors duration-150">
-                    <div class="w-12 h-12 rounded-full bg-blue-600/15 border border-blue-500/30 flex items-center justify-center shrink-0">
-                        <img src="/assets/img/icons/voice-black.svg" alt="Voz" class="w-5 h-5 object-contain opacity-85 dark:invert">
+                    <div class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center p-3 shrink-0 shadow-md">
+                        <img src="/assets/img/icons/voice-black.svg" alt="Voz" class="w-full h-full object-contain filter invert">
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 truncate">Voz Principal</p>
@@ -67,8 +67,8 @@
 
                 <!-- 2. BATERÍA -->
                 <div class="group flex items-center gap-4 p-6 sm:p-7 min-h-[124px] sm:min-h-[136px] rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/90 dark:bg-slate-800/60 dark:hover:bg-slate-800 dark:border-slate-700 hover:border-blue-400/60 transition-colors duration-150">
-                    <div class="w-12 h-12 rounded-full bg-teal-600/15 border border-teal-500/30 flex items-center justify-center shrink-0">
-                        <img src="/assets/img/icons/drums-black.svg" alt="Batería" class="w-5 h-5 object-contain opacity-85 dark:invert">
+                    <div class="w-12 h-12 rounded-full bg-teal-600 flex items-center justify-center p-3 shrink-0 shadow-md">
+                        <img src="/assets/img/icons/drums-black.svg" alt="Batería" class="w-full h-full object-contain filter invert">
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 truncate">Batería</p>
@@ -86,8 +86,8 @@
 
                 <!-- 3. BAJO -->
                 <div class="group flex items-center gap-4 p-6 sm:p-7 min-h-[124px] sm:min-h-[136px] rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/90 dark:bg-slate-800/60 dark:hover:bg-slate-800 dark:border-slate-700 hover:border-blue-400/60 transition-colors duration-150">
-                    <div class="w-12 h-12 rounded-full bg-indigo-600/15 border border-indigo-500/30 flex items-center justify-center shrink-0">
-                        <img src="/assets/img/icons/bass-black.svg" alt="Bajo" class="w-5 h-5 object-contain opacity-85 dark:invert">
+                    <div class="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center p-3 shrink-0 shadow-md">
+                        <img src="/assets/img/icons/bass-black.svg" alt="Bajo" class="w-full h-full object-contain filter invert">
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 truncate">Bajo Eléctrico</p>
@@ -105,8 +105,8 @@
 
                 <!-- 4. OTROS -->
                 <div class="group flex items-center gap-4 p-6 sm:p-7 min-h-[124px] sm:min-h-[136px] rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/90 dark:bg-slate-800/60 dark:hover:bg-slate-800 dark:border-slate-700 hover:border-blue-400/60 transition-colors duration-150">
-                    <div class="w-12 h-12 rounded-full bg-rose-600/15 border border-rose-500/30 flex items-center justify-center shrink-0">
-                        <img src="/assets/img/icons/guitar-black.svg" alt="Otros" class="w-5 h-5 object-contain opacity-85 dark:invert">
+                    <div class="w-12 h-12 rounded-full bg-rose-600 flex items-center justify-center p-3 shrink-0 shadow-md">
+                        <img src="/assets/img/icons/piano-black.svg" alt="Otros" class="w-full h-full object-contain filter invert">
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 truncate">Otros (Teclados/Guitarra)</p>
@@ -126,7 +126,7 @@
         </div>
 
         <!-- Pie del Modal: ZIP completo + CTA principal -->
-        <div class="px-6 py-4 sm:px-8 sm:py-5 bg-gray-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="px-6 py-4 sm:px-8 sm:py-5 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3">
             <!-- Descargar todo en ZIP -->
             <a :href="sessionId ? '/download/stems-completos.zip?session=' + sessionId : '/download/stems-completos.zip'" download
                 class="w-full sm:w-auto px-6 py-2.5 rounded-2xl border border-slate-300 hover:border-blue-400 bg-white hover:bg-blue-50/60 text-slate-700 hover:text-blue-800 dark:border-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:hover:text-blue-200 font-semibold text-sm transition-colors flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer"

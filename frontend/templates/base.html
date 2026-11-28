@@ -36,7 +36,18 @@
                         'card': '0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.04)',
                     }
                 }
-            }
+            },
+            // Variantes para pantallas de escritorio con poca altura útil (≤ 1680x1050, laptops, 1366x768...):
+            // compactan la vista principal para que botón y progreso queden siempre visibles.
+            // Se definen como variantes y NO como 'screens': un screen 'raw' (por altura) desactiva
+            // en Tailwind v3 las variantes arbitrarias min-[...] que usa la sala de ensayo.
+            plugins: [
+                function ({ addVariant }) {
+                    // 'html &' sube la especificidad para ganar a lg:/xl:, que el CDN emite después.
+                    addVariant('compact', '@media (min-width: 768px) and (max-height: 1050px) { html & }');
+                    addVariant('compact-xl', '@media (min-width: 1280px) and (max-height: 1050px) { html & }');
+                },
+            ],
         }
     </script>
 

@@ -1,58 +1,51 @@
 <!-- Tarjetas Informativas: Pistas que entregará la IA (4 Stems Reales de Demucs) -->
-<div class="space-y-4 pt-7 sm:pt-8">
+<!-- Contenedor con fondo sutil y bordes redondeados, en sintonía con el dropzone -->
+<div class="rounded-2xl border border-slate-200 bg-[#E6ECF5]/60 dark:border-slate-800 dark:bg-slate-900/60 px-2 py-3 sm:py-4 compact:py-3">
     <!-- Grid de 4 Stems — Contenedores tonales con icono sobre color sólido -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-5 compact:gap-3">
 
         <!-- 1. VOZ — Azul Cobalto -->
         <div
-            class="group relative py-6 px-4 min-h-[115px] flex flex-col items-center justify-center gap-3 text-center">
-            <div
-                class="w-20 h-20 sm:w-22 sm:h-22 rounded-full bg-blue-600 flex items-center justify-center p-4 shadow-md group-hover:scale-105 transition-transform duration-200">
+            class="group relative py-2 px-2 md:py-5 md:px-4 compact:py-1 flex flex-col items-center justify-center gap-2 md:gap-3 compact:gap-2 text-center">
+            <div :class="isProcessing ? 'animate-pulse' : ''"
+                class="w-14 h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 compact:w-14 compact:h-14 rounded-full bg-blue-600 flex items-center justify-center p-3.5 xl:p-4 compact:p-3.5 shadow-md">
                 <img src="/assets/img/icons/voice-black.svg" alt="Icono de Voz"
                     class="w-full h-full object-contain filter invert" loading="lazy">
             </div>
-            <div class="space-y-0.5">
-                <span class="block text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">Voz</span>
-            </div>
+            <span class="block text-sm md:text-base lg:text-lg compact:text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">Voz</span>
         </div>
 
         <!-- 2. BATERÍA — Teal -->
         <div
-            class="group relative py-6 px-4 min-h-[115px] flex flex-col items-center justify-center gap-3 text-center">
-            <div
-                class="w-20 h-20 sm:w-22 sm:h-22 rounded-full bg-teal-600 flex items-center justify-center p-4 shadow-md group-hover:scale-105 transition-transform duration-200">
+            class="group relative py-2 px-2 md:py-5 md:px-4 compact:py-1 flex flex-col items-center justify-center gap-2 md:gap-3 compact:gap-2 text-center">
+            <div :class="isProcessing ? 'animate-pulse [animation-delay:150ms]' : ''"
+                class="w-14 h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 compact:w-14 compact:h-14 rounded-full bg-teal-600 flex items-center justify-center p-3.5 xl:p-4 compact:p-3.5 shadow-md">
                 <img src="/assets/img/icons/drums-black.svg" alt="Icono de Batería"
                     class="w-full h-full object-contain filter invert" loading="lazy">
             </div>
-            <div class="space-y-0.5">
-                <span class="block text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">Batería</span>
-            </div>
+            <span class="block text-sm md:text-base lg:text-lg compact:text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">Batería</span>
         </div>
 
         <!-- 3. BAJO — Púrpura -->
         <div
-            class="group relative py-6 px-4 min-h-[115px] flex flex-col items-center justify-center gap-3 text-center">
-            <div
-                class="w-20 h-20 sm:w-22 sm:h-22 rounded-full bg-purple-600 flex items-center justify-center p-4 shadow-md group-hover:scale-105 transition-transform duration-200">
+            class="group relative py-2 px-2 md:py-5 md:px-4 compact:py-1 flex flex-col items-center justify-center gap-2 md:gap-3 compact:gap-2 text-center">
+            <div :class="isProcessing ? 'animate-pulse [animation-delay:300ms]' : ''"
+                class="w-14 h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 compact:w-14 compact:h-14 rounded-full bg-purple-600 flex items-center justify-center p-3.5 xl:p-4 compact:p-3.5 shadow-md">
                 <img src="/assets/img/icons/bass-black.svg" alt="Icono de Bajo"
                     class="w-full h-full object-contain filter invert" loading="lazy">
             </div>
-            <div class="space-y-0.5">
-                <span class="block text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">Bajo</span>
-            </div>
+            <span class="block text-sm md:text-base lg:text-lg compact:text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">Bajo</span>
         </div>
 
         <!-- 4. OTROS — Rose -->
         <div
-            class="group relative py-6 px-4 min-h-[115px] flex flex-col items-center justify-center gap-3 text-center">
-            <div
-                class="w-20 h-20 sm:w-22 sm:h-22 rounded-full bg-rose-600 flex items-center justify-center p-4 shadow-md group-hover:scale-105 transition-transform duration-200">
+            class="group relative py-2 px-2 md:py-5 md:px-4 compact:py-1 flex flex-col items-center justify-center gap-2 md:gap-3 compact:gap-2 text-center">
+            <div :class="isProcessing ? 'animate-pulse [animation-delay:450ms]' : ''"
+                class="w-14 h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 compact:w-14 compact:h-14 rounded-full bg-rose-600 flex items-center justify-center p-3.5 xl:p-4 compact:p-3.5 shadow-md">
                 <img src="/assets/img/icons/piano-black.svg" alt="Icono de Otros"
                     class="w-full h-full object-contain filter invert" loading="lazy">
             </div>
-            <div class="space-y-0.5">
-                <span class="block text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">Otros</span>
-            </div>
+            <span class="block text-sm md:text-base lg:text-lg compact:text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">Otros</span>
         </div>
 
     </div>
